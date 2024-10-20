@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./css/styles.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Edu+AU+VIC+WA+NT+Hand&display=swap");
+    </style>
+    <title>Signup lms</title>
+  </head>
+  <body>
+    <div class="grid grid-cols-6">
+      <div class="col-start-3 col-span-2">
+        <h6 class="py-4">Signup as a new user</h6>
+        <form action="/users" method="post">
+           <!-- Role Selection -->
+           <div class="py-3">
+            <label for="role">Role</label>
+            <div class="flex space-x-4">
+              <label class="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="educator"
+                  class="form-radio"
+                  required
+                />
+                <span class="ml-2">Educator</span>
+              </label>
+              <label class="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="student"
+                  class="form-radio"
+                  required
+                />
+                <span class="ml-2">Student</span>
+              </label>
+            </div>
+          </div>
+          <div class="py-3">
+            <label for="name">Name</label>
+            <input
+              type="text"
+              name="name"
+              class="border border-gray-300 text-gray-900 rounded p-2 w-full"
+            />
+          </div>
+          <div class="py-3">
+            <label for="email">Email</label>
+            <input
+              type="text"
+              name="email"
+              class="border border-gray-300 text-gray-900 rounded p-2 w-full" required
+            />
+          </div>
+          <div class="py-3">
+            <label for="password">Password</label>
+            <input
+              type="text"
+              name="password"
+              class="border border-gray-300 text-gray-900 rounded p-2 w-full" required
+            />
+          </div>
+          <button
+            type="submit"
+            class="text-white bg-green-600 hover:bg-green-800 font-medium rounded px-5 py-2"
+          >
+            Sign up
+          </button>
+        </form>
+      </div>
+    </div>
+    <%-include('./footer')%>
+
+  </body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Courses</title>
+    <!-- Tailwind CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* Custom styles if needed */
+      .course-card:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s;
+      }
+    </style>
+    <script>
+      function fetchChapters(courseId, role, courseElement) {
+        let chaptersList =
+          courseElement.parentElement.querySelector(".chapters-list");
+
+        if (chaptersList) {
+          chaptersList.remove();
+          courseElement.parentElement.querySelector("h3")?.remove();
+          return;
+        }
+        fetch(`/fetch-chapters/${courseId}/${role}`, {
+          method: "get",
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            let chaptersList = courseElement.querySelector(".chapters-list");
+            if (!chaptersList) {
+              chapterHeading = document.createElement("h3");
+              chapterHeading.classList.add("py-2", "text-lg", "font-semibold");
+              chapterHeading.textContent = "Chapters:";
+              chaptersList = document.createElement("ul");
+              chaptersList.classList.add("chapters-list", "mt-4", "space-y-2");
+              courseElement.appendChild(chapterHeading);
+              courseElement.appendChild(chaptersList);
+            } else {
+              chaptersList.innerHTML = "";
+            }
+
+            if (data.courseChapters.length === 0) {
+              const noChaptersMessage = document.createElement("p");
+              noChaptersMessage.classList.add("text-red-500", "mt-2");
+              noChaptersMessage.textContent = "No chapters available. Create one!";
+              chaptersList.appendChild(noChaptersMessage);
+            } else {
+              data.courseChapters.forEach((chapter) => {
+                const chapterItem = document.createElement("li");
+                chapterItem.classList.add("bg-gray-100", "p-2", "rounded");
+                chapterItem.textContent = chapter.chapterName;
+                chapterItem.addEventListener("click", () => {
+                  window.location.href = `/show-pages/${chapter.id}/${role}/${courseId}`;
+                });
+                chaptersList.appendChild(chapterItem);
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching chapters:", error);
+          });
+      }
+
+      function enrollCourse(courseId, studentId, courseName) {
+        console.log("courseName" + courseName);
+        fetch("/enroll", {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId: courseId, userId: studentId, courseName: courseName }),
+        }).then((res) => {
+          if (res.status === 200) {
+            console.log("Course enrolled successfully!");
+            window.location.reload();
+          } else {
+            console.error("Error enrolling course!");
+          }
+        });
+      }
+    </script>
+  </head>
+  <body class="bg-gray-100 text-gray-800 p-8">
+    <%- include('header') %>
+    <% if (userRole === 'educator') { %>
+    <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">
+      Courses Created by <%= userName %>!
+    </h1>
+    <% for (let course of createdCourses) { %>
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 course-card">
+      <h2
+        onClick="fetchChapters('<%=course.id%>','<%=userRole%>',this)"
+        class="text-xl font-semibold cursor-pointer text-blue-500"
+      >
+        Name of the course: <%= course.courseName %>
+      </h2>
+      <form action="/create-chapter" method="get" class="mt-4">
+        <input type="hidden" name="courseId" value="<%= course.id %>" />
+        <input
+          type="submit"
+          value="Create Chapter"
+          class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200 text-sm"
+        />
+      </form>
+    </div>
+    <% } %> <% } else { %>
+    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">Enrolled Courses</h1>
+    <ul class="space-y-4">
+      <% for (let course of enrolledCourses) { %>
+      <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card"></li>
+        <span class="font-medium text-lg text-gray-700"><%= course.courseName %></span>
+        <form action="/show-chapters" method="get">
+          <input type="hidden" name="courseId" value="<%= course.courseId %>" />
+          <input
+            type="submit"
+            value="View Course"
+            class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+          />
+        </form>
+      </li>
+      <% } %>
+    </ul>
+    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">Available Courses</h1>
+    <ul class="space-y-4">
+      <% for (let course of unenrolledCourses) { %>
+      <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card">
+        <span class="font-medium text-lg text-gray-700"><%= course.courseName %></span>
+        <form action="/show-chapters" method="get">
+          <input type="hidden" name="courseId" value="<%= course.id %>" />
+          <input
+            type="submit"
+            value="View Course"
+            class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+          />
+        </form>
+        <button
+          onClick="enrollCourse('<%=course.id%>','<%=userId%>','<%=course.courseName%>')"
+          class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+        >
+          Enroll
+        </button>
+      </li>
+      <% } %>
+    </ul>
+    <% } %>
+    <%- include('./footer') %>
+  </body>
+</html>

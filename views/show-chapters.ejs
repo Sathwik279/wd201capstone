@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS c</title>
+   
+</head>
+<body>
+        <%for(let chapter of courseChapters){%>
+            <form action="/show-pages/<%= chapter.id %>/<%= userRole %>" method="get">
+                <input type="hidden" name="courseId" value="<%=courseId%>">
+                <p>course Id <%=courseId%></p>
+                <button type="submit">Chapter Name : <%= chapter.chapterName %></button>
+            </form>
+            <h3>Chapter desc : <%=chapter.chapterDesc%></h3>
+            <hr>
+            <%}%>
+            <%-include('./footer')%>
+
+</body>
+</html>

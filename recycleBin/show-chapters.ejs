@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS c</title>
+</head>
+<body>
+    <%-include('../header')%>
+
+    <%for(let chapter of courseChapters){%>
+        <h2>Chapter Name : <%=chapter.chapterName%></h2>
+        <h3>Chapter desc : <%=chapter.chapterDesc%></h3>
+        <%for(let page of allPages){%>
+            <%if(chapter.id === page.chapterId){%>
+                
+                <p><%=page.pageName%></p>
+                <p><%=page.pageContent%></p>
+            <%}%>
+        <%}%>
+        <form action="/create-page" method="get">
+            <input type="hidden" name="chapterId" value="<%=chapter.id%>">
+            <input type="submit" value="create pages">
+        <hr>
+        <%}%>
+</body>
+</html>

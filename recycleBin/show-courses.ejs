@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles if needed */
+    </style>
+    <script>
+        function fetchChapters(chapter) {
+        fetch(`/show-chapters/${chapter}`, {
+          method: "get",
+        
+        })}
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-8">
+    <%- include('header') %>
+    <% if (userRole === 'educator') { %>
+        <h1 class="text-2xl font-bold text-center mb-8">Courses Created by <%= userName %>!</h1> <!-- Changed from text-3xl to text-2xl -->
+        
+        <% for (let course of createdCourses) { %>
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold">Name of the course: <%= course.courseName %></h2> <!-- Changed from text-xl to text-lg -->
+                <p class="mt-2 text-sm font-medium">Chapters:</p> <!-- Changed to text-sm -->
+                <ul class="list-disc list-inside mt-2">
+                    <% for (let chapter of allChapters) { %>
+                        <% if (course.id === chapter.courseId) { %>     
+                            <li onClick="fetchChapters('<%=chapter%>')" class="text-sm"><%= chapter.chapterName %></li> <!-- Changed to text-sm -->
+                        <% } %>
+                    <% } %>
+                </ul>
+                <form action="/create-chapter" method="get" class="mt-4">
+                    <input type="hidden" name="courseId" value="<%= course.id %>">
+                    <input type="submit" value="Create Chapter" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200 text-sm"> <!-- Changed to text-sm -->
+                </form>
+            </div>
+        <% } %>
+        
+    <% } else { %>
+        <h1 class="text-2xl font-bold text-center mb-8">Available Courses</h1> <!-- Changed from text-3xl to text-2xl -->
+        <ul class="space-y-4">
+            <% for (let course of allCourses) { %>
+                <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
+                    <span class="font-medium text-sm"><%= course.courseName %></span> <!-- Changed to text-sm -->
+                    <form action="/enroll" method="post">
+                        <input type="hidden" name="courseId" value="<%= course.id %>">
+                        <input type="submit" value="Enroll" class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"> <!-- Changed to text-sm -->
+                    </form>
+                </li>
+            <% } %>
+        </ul>
+    <% } %>
+    
+</body>
+</html>

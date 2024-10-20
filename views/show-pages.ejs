@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      // Initialize chapterPages from the server-side
+      let chapterPages = <%- JSON.stringify(chapterPages) %>;
+      let currentPageIndex = 0;
+
+      // Function to render the current page
+      function renderPage() {
+        if (chapterPages.length > 0 && currentPageIndex < chapterPages.length) {
+          // Update page name and content
+          document.getElementById('pageName').innerText = chapterPages[currentPageIndex].pageName;
+          document.getElementById('pageContent').innerText = chapterPages[currentPageIndex].pageContent;
+        }
+      }
+      function prevPage() {
+        if (currentPageIndex >0) {
+          currentPageIndex--;
+          renderPage(); // Render the next page
+        } else {
+          alert("You are on the last page.");
+        }
+      }
+
+      // Function to go to the next page
+      function nextPage() {
+        if (currentPageIndex < chapterPages.length - 1) {
+          currentPageIndex++;
+          renderPage(); // Render the next page
+        } else {
+          alert("You are on the last page.");
+        }
+      }
+
+      // Function to load the first page when the page is loaded
+      window.onload = function() {
+        renderPage();
+      };
+    </script>
+  </head>
+
+  <body>
+    <%- include('header') %>
+
+    <!-- Display message if no pages are available -->
+    <% if (chapterPages.length == 0) { %>
+      <h1>No pages available. Create one!</h1>
+    <% } else { %>
+      <!-- Page rendering section -->
+      <h2 id="pageName"></h2>
+      <h3 id="pageContent"></h3>
+      <button onclick="prevPage()">Prev Page</button>
+      <button onclick="nextPage()">Next Page</button>
+      <hr />
+    <% } %>
+
+    <!-- Educator role: show form to create a new page -->
+  
+    
+    <% if (userRole === 'educator' && userCreatedCourseIds.includes(parseInt(courseId))) { %>
+      <form action="/create-page" method="get" class="mt-4">
+        <input type="hidden" name="chapterId" value="<%= chapterId %>" />
+        <input type="hidden" name="courseId" value="<%= courseId %>" />
+        <input
+          type="submit"
+          value="Create Page"
+          class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200 text-sm"
+        />
+      </form>
+    <% } %>
+    
+    <%-include('./footer')%>
+
+  </body>
+</html>

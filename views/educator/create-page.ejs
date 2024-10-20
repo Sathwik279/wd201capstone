@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <%- include('../header') %>
+
+    <h1>New Page</h1>
+    <form action="/page" method="post">
+        <h3>What is the name of the page</h3>
+        <label for="pageName">Page Name:</label>
+        <input type="text" name="pageName" id="pageName" placeholder="Enter the name of the page">
+        <p><%= JSON.stringify(courseChapters) %></p>
+        <input type="hidden" name="courseId" value="<%= courseId %>">
+
+        <label for="chapterSelect">Select Chapter:</label>
+        <select name="chapterId" id="chapterSelect">
+            <% courseChapters.forEach(function(chapter) { %>
+                <option value="<%= chapter.id %>"><%= chapter.chapterName %></option>
+            <% }); %>
+        </select>
+        <br>
+        
+        <h3>Content</h3>
+        <textarea name="pageContent" id="pageContent" cols="30" rows="10" placeholder="Enter the content of the page"></textarea>
+        <input type="submit" value="submit">
+    </form>
+    <%- include('../footer') %>
+</body>
+</html>

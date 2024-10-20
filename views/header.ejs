@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+</head>
+<body class="min-h-full py-2">
+
+    <!-- Header Section -->
+    <header class="bg-white py-4 shadow-md px-2">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg font-bold">Dashboard</h1>
+            <nav class="flex space-x-4">
+                <% if (userRole === 'educator') { %>
+                    <a href="/educator" class="text-blue-600 hover:text-blue-800">Educator Home</a>
+                <% } else { %>
+                    <a href="/student" class="text-green-600 hover:text-green-800">Student Home</a>
+                <% } %>
+                <a href="/" class="text-red-600 hover:text-red-800">Login Page</a>
+                <form action="/signout" method="get">
+                    <button class="bg-red-500 text-white py-2 px-4 rounded">Signout</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+</body>
+</html>

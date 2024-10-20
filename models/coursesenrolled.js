@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   coursesEnrolled.init(
     {
       courseName: DataTypes.STRING,
-      progress: DataTypes.INTEGER,
+      courseProgress: DataTypes.INTEGER,
     },
     {
       sequelize,
