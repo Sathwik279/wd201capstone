@@ -3,77 +3,133 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <meta name="csrf-token" content="<%=csrfToken%>"/>
     <title>Document</title>
     <script>
-      // Initialize chapterPages from the server-side
-      let chapterPages = <%- JSON.stringify(chapterPages) %>;
-      let currentPageIndex = 0;
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+            // Initialize chapterPages from the server-side
+            let chapterPages = <%- JSON.stringify(chapterPages) %>;
+            let currentPageIndex = 0;
 
-      // Function to render the current page
-      function renderPage() {
-        if (chapterPages.length > 0 && currentPageIndex < chapterPages.length) {
-          // Update page name and content
-          document.getElementById('pageName').innerText = chapterPages[currentPageIndex].pageName;
-          document.getElementById('pageContent').innerText = chapterPages[currentPageIndex].pageContent;
-        }
-      }
-      function prevPage() {
-        if (currentPageIndex >0) {
-          currentPageIndex--;
-          renderPage(); // Render the next page
-        } else {
-          alert("You are on the last page.");
-        }
-      }
+            // Function to render the current page
+            function renderPage() {
+              if (chapterPages.length > 0 && currentPageIndex < chapterPages.length) {
+                document.getElementById('pageName').innerText = chapterPages[currentPageIndex].pageName;
+                document.getElementById('pageContent').innerText = chapterPages[currentPageIndex].pageContent;
+              }
+            }
 
-      // Function to go to the next page
-      function nextPage() {
-        if (currentPageIndex < chapterPages.length - 1) {
-          currentPageIndex++;
-          renderPage(); // Render the next page
-        } else {
-          alert("You are on the last page.");
-        }
-      }
+            function prevPage() {
+              if (currentPageIndex > 0) {
+                currentPageIndex--;
+                renderPage();
+              } else {
+                alert("You are on the first page.");
+              }
+            }
 
-      // Function to load the first page when the page is loaded
-      window.onload = function() {
-        renderPage();
-      };
+            function nextPage() {
+              if (currentPageIndex < chapterPages.length - 1) {
+                currentPageIndex++;
+                renderPage();
+              } else {
+                alert("You are on the last page.");
+              }
+            }
+
+          function markAsCompleted() {
+              console.log("hi");
+              const markAsCompletedButton = document.getElementById('markAsCompleted');
+              const pageId = chapterPages[currentPageIndex].id; // Ensure correct page ID
+
+              console.log("pageID: " + pageId);
+
+              // Make a GET request to the server to mark the page as completed
+              fetch(`/mark-as-completed/${pageId}`, {
+                method: 'GET', // You are sending a GET request, so it's okay
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body:JSON.stringify({
+                  "_csrf":token
+                })
+              })
+                .then((response) => {
+                  // Check if the response is OK
+                  if (!response.ok) {
+                    throw new Error('Failed to mark the page as completed.');
+                  }
+                  return response.json(); // Return the JSON response
+                })
+                .then((data) => {
+                  if (data.success) {
+                    // Update the button text to 'Completed'
+                    markAsCompletedButton.innerText = 'Completed';
+                  } else {
+                    alert('Failed to mark the page as completed.');
+                  }
+                })
+                .catch((error) => {
+                  console.error('Error:', error);
+                });
+            }
+
+
+            window.onload = function() {
+              renderPage();
+            };
     </script>
   </head>
 
-  <body>
-    <%- include('header') %>
-
-    <!-- Display message if no pages are available -->
-    <% if (chapterPages.length == 0) { %>
-      <h1>No pages available. Create one!</h1>
+  <body class="bg-gray-100 text-gray-900">
+    <%- include('header') %> <% if (chapterPages.length === 0) { %>
+    <h1 class="text-center text-2xl font-bold mt-8">
+      No pages available. Create one!
+    </h1>
     <% } else { %>
-      <!-- Page rendering section -->
-      <h2 id="pageName"></h2>
-      <h3 id="pageContent"></h3>
-      <button onclick="prevPage()">Prev Page</button>
-      <button onclick="nextPage()">Next Page</button>
-      <hr />
-    <% } %>
-
-    <!-- Educator role: show form to create a new page -->
-  
-    
-    <% if (userRole === 'educator' && userCreatedCourseIds.includes(parseInt(courseId))) { %>
+    <div class="container mx-auto p-4 bg-white shadow-md rounded-lg mt-8">
+      <h2 id="pageName" class="text-2xl font-semibold mb-4 text-center"></h2>
+      <h3 id="pageContent" class="text-lg mb-6 text-center"></h3>
+      <div class="flex justify-between">
+        <button
+          onclick="prevPage()"
+          class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+        >
+          Prev Page
+        </button>
+        <button
+          id="markAsCompleted"
+          onClick="markAsCompleted()"
+          class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200"
+        >
+          Mark as Completed
+        </button>
+        <button
+          onclick="nextPage()"
+          class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+        >
+          Next Page
+        </button>
+      </div>
+    </div>
+    <% } %> <% if (userRole === 'educator' &&
+    userCreatedCourseIds.includes(parseInt(courseId))) { %>
+    <div class="container mx-auto p-4 bg-white shadow-md rounded-lg mt-8">
       <form action="/create-page" method="get" class="mt-4">
+        <input type="hidden" name="_csrf" value="<%=csrfToken%>">
         <input type="hidden" name="chapterId" value="<%= chapterId %>" />
         <input type="hidden" name="courseId" value="<%= courseId %>" />
         <input
           type="submit"
           value="Create Page"
-          class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200 text-sm"
+          class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
         />
       </form>
-    <% } %>
-    
-    <%-include('./footer')%>
-
+    </div>
+    <% } %> <%- include('./footer') %>
   </body>
 </html>

@@ -16,6 +16,7 @@
         <h6 class="py-4">Login as an existing user</h6>
         <form action="/session" method="post">
            <!-- Role Selection -->
+            <input type="hidden" name="_csrf" value="<%=csrfToken%>"/>
            <div class="py-3">
             <label for="role">Role</label>
             <div class="flex space-x-4">

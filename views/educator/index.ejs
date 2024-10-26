@@ -75,6 +75,7 @@
               </button>
             </form>
             <form action="/enroll" method="post" class="block">
+              <input type="hidden" name="_csrf" value="<%=csrfToken%>">
               <input type="hidden" name="courseId" value="<%= course.id %>" />
               <input type="hidden" name="userId" value="<%= userId %>" />
               <input type="hidden" name="courseName" value="<%= course.courseName %>" />

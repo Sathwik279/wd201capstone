@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="<%=csrfToken%>"/>
     <title>Courses</title>
     <!-- Tailwind CSS -->
     <link
@@ -10,31 +11,37 @@
       rel="stylesheet"
     />
     <style>
-      /* Custom styles if needed */
+      /* Custom hover effect for course cards */
       .course-card:hover {
         transform: scale(1.02);
         transition: transform 0.2s;
       }
     </style>
     <script>
+      var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+      // Fetch chapters for a specific course
       function fetchChapters(courseId, role, courseElement) {
         let chaptersList =
           courseElement.parentElement.querySelector(".chapters-list");
 
+        // Toggle chapters visibility
         if (chaptersList) {
           chaptersList.remove();
           courseElement.parentElement.querySelector("h3")?.remove();
           return;
         }
+
         fetch(`/fetch-chapters/${courseId}/${role}`, {
           method: "get",
           headers: { "Content-Type": "application/json" },
+          
         })
           .then((res) => res.json())
           .then((data) => {
+            // Create chapters list if it doesn't exist
             let chaptersList = courseElement.querySelector(".chapters-list");
             if (!chaptersList) {
-              chapterHeading = document.createElement("h3");
+              const chapterHeading = document.createElement("h3");
               chapterHeading.classList.add("py-2", "text-lg", "font-semibold");
               chapterHeading.textContent = "Chapters:";
               chaptersList = document.createElement("ul");
@@ -45,15 +52,23 @@
               chaptersList.innerHTML = "";
             }
 
+            // Handle case with no chapters
             if (data.courseChapters.length === 0) {
               const noChaptersMessage = document.createElement("p");
               noChaptersMessage.classList.add("text-red-500", "mt-2");
-              noChaptersMessage.textContent = "No chapters available. Create one!";
+              noChaptersMessage.textContent =
+                "No chapters available. Create one!";
               chaptersList.appendChild(noChaptersMessage);
             } else {
+              // Populate chapters list
               data.courseChapters.forEach((chapter) => {
                 const chapterItem = document.createElement("li");
-                chapterItem.classList.add("bg-gray-100", "p-2", "rounded");
+                chapterItem.classList.add(
+                  "bg-gray-100",
+                  "p-2",
+                  "rounded",
+                  "cursor-pointer"
+                );
                 chapterItem.textContent = chapter.chapterName;
                 chapterItem.addEventListener("click", () => {
                   window.location.href = `/show-pages/${chapter.id}/${role}/${courseId}`;
@@ -67,38 +82,50 @@
           });
       }
 
+      // Enroll in a course
       function enrollCourse(courseId, studentId, courseName) {
-        console.log("courseName" + courseName);
         fetch("/enroll", {
           method: "post",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseId: courseId, userId: studentId, courseName: courseName }),
+          body: JSON.stringify({
+            courseId: courseId,
+            userId: studentId,
+            courseName: courseName,
+            "_csrf":token
+          }),
         }).then((res) => {
           if (res.status === 200) {
             console.log("Course enrolled successfully!");
             window.location.reload();
           } else {
-            console.error("Error enrolling course!");
+            console.error("Error enrolling in course!");
           }
         });
       }
     </script>
   </head>
-  <body class="bg-gray-100 text-gray-800 p-8">
+
+  <body class="bg-gray-100 text-gray-800 p-8 min-h-screen flex flex-col">
     <%- include('header') %>
+
+    <!-- Educator View -->
     <% if (userRole === 'educator') { %>
     <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">
       Courses Created by <%= userName %>!
     </h1>
+
+    <!-- Loop through created courses -->
     <% for (let course of createdCourses) { %>
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6 course-card">
       <h2
-        onClick="fetchChapters('<%=course.id%>','<%=userRole%>',this)"
+        onClick="fetchChapters('<%= course.id %>', '<%= userRole %>', this)"
         class="text-xl font-semibold cursor-pointer text-blue-500"
       >
         Name of the course: <%= course.courseName %>
       </h2>
+
       <form action="/create-chapter" method="get" class="mt-4">
+        <input type="hidden" name="_csrf" value="<%=csrfToken%>">
         <input type="hidden" name="courseId" value="<%= course.id %>" />
         <input
           type="submit"
@@ -107,13 +134,25 @@
         />
       </form>
     </div>
-    <% } %> <% } else { %>
-    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">Enrolled Courses</h1>
+    <% } %>
+
+    <!-- Student View -->
+    <% } else { %>
+    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">
+      Enrolled Courses
+    </h1>
+
+    <!-- Enrolled Courses -->
     <ul class="space-y-4">
       <% for (let course of enrolledCourses) { %>
-      <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card"></li>
-        <span class="font-medium text-lg text-gray-700"><%= course.courseName %></span>
+      <li
+        class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card"
+      >
+        <span class="font-medium text-lg text-gray-700"
+          ><%= course.courseName %></span
+        >
         <form action="/show-chapters" method="get">
+          <input type="hidden" name="_csrf" value="<%=csrfToken%>">
           <input type="hidden" name="courseId" value="<%= course.courseId %>" />
           <input
             type="submit"
@@ -124,29 +163,39 @@
       </li>
       <% } %>
     </ul>
-    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">Available Courses</h1>
+
+    <!-- Available Courses -->
+    <h1 class="text-3xl font-bold text-center mb-8 text-green-600">
+      Available Courses
+    </h1>
     <ul class="space-y-4">
       <% for (let course of unenrolledCourses) { %>
-      <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card">
-        <span class="font-medium text-lg text-gray-700"><%= course.courseName %></span>
-        <form action="/show-chapters" method="get">
-          <input type="hidden" name="courseId" value="<%= course.id %>" />
-          <input
-            type="submit"
-            value="View Course"
-            class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
-          />
-        </form>
-        <button
-          onClick="enrollCourse('<%=course.id%>','<%=userId%>','<%=course.courseName%>')"
-          class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+      <li
+        class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center course-card"
+      >
+        <span class="font-medium text-lg text-gray-700"
+          ><%= course.courseName %></span
         >
-          Enroll
-        </button>
+        <div class="flex space-x-2">
+          <form action="/show-chapters" method="get">
+            <input type="hidden" name="_csrf" value="<%=csrfToken%>">
+            <input type="hidden" name="courseId" value="<%= course.id %>" />
+            <input
+              type="submit"
+              value="View Course"
+              class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+            />
+          </form>
+          <button
+            onClick="enrollCourse('<%= course.id %>', '<%= userId %>', '<%= course.courseName %>')"
+            class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-200 text-sm"
+          >
+            Enroll
+          </button>
+        </div>
       </li>
       <% } %>
     </ul>
-    <% } %>
-    <%- include('./footer') %>
+    <% } %> <%- include('./footer') %>
   </body>
 </html>

@@ -13,6 +13,7 @@
         <h1 class="text-3xl font-bold mb-6 text-center">Create New Course</h1>
 
         <form action="/course" method="post" class="bg-white p-6 rounded-lg shadow-md">
+            <input type="hidden" name="_csrf" value="<%=csrfToken%>">
             <div class="mb-4">
                 <label for="courseName" class="block text-gray-700 text-sm font-bold mb-2">What is the name of the course</label>
                 <input type="text" name="courseName" id="courseName" placeholder="Enter the name of the course" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">

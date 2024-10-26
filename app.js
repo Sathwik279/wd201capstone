@@ -10,20 +10,25 @@ const {
 } = require("./models");
 
 const path = require("path");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+
 const passport = require("passport");
+
+const cookieParser = require("cookie-parser");//csrf needs this..
+const csrf = require("tiny-csrf");
+
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const localStrategy = require("passport-local");
-const { where } = require("sequelize");
+
 const saltRounds = 10;
 
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json()); //used to parse json data from body
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! some secret string"));
+app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
 
 app.set("view engine", "ejs"); //we are not using plain html
 app.set("views", path.join(__dirname, "views"));
@@ -36,6 +41,7 @@ app.use(
     },
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -89,16 +95,19 @@ passport.deserializeUser((id, done) => {
     });
 });
 app.get("/", (request, response) => {
-  response.render("index");
+  response.render("index"); //csrf not required
 });
 
 app.get("/signup", (request, response) => {
-  response.render("signup");
+  response.render("signup",{
+    csrfToken:request.csrfToken(),  //csrf done
+  });
 });
-
+ 
 app.get("/login", (request, response) => {
   response.render("login", {
     title: "Login",
+    csrfToken:request.csrfToken(),  //csrf done
   });
 });
 
@@ -138,6 +147,7 @@ app.get(
         userRole,
         allCourses,
         userId,
+        csrfToken:request.csrfToken(),
       });
     } else {
       response.json({});
@@ -157,6 +167,7 @@ app.get(
       response.render("./student/index", {
         userRole,
         userName,
+        csrfToken:request.csrfToken(),
       });
     } else {
       response.json({});
@@ -168,6 +179,7 @@ app.get("/create-course", async (request, response) => {
   const userRole = request.user.role;
   response.render("./educator/create-course", {
     userRole,
+    csrfToken:request.csrfToken(),
   });
 });
 
@@ -178,6 +190,7 @@ app.get("/create-chapter", async (request, response) => {
   response.render("./educator/create-chapter", {
     courseId,
     userRole,
+    csrfToken:request.csrfToken(),
   });
 });
 
@@ -195,7 +208,26 @@ app.get("/create-page", async (request, response) => {
     courseChapters,
     chapterId,
     userRole,
+    csrfToken:request.csrfToken(),
   });
+});
+
+app.get("/mark-as-completed/:pageId", async (request, response) => {
+  console.log("Hit the markAsCompleted route");
+  const pageId = request.params.pageId;
+  const pageToBeUpdated = await page.findByPk(pageId);
+
+  if (pageToBeUpdated) {
+    // Update the completed array by adding the user's ID
+    pageToBeUpdated.completed = [...pageToBeUpdated.completed, request.user.id];
+    await pageToBeUpdated.save();
+
+    // Send a JSON success response instead of redirecting
+    response.status(200).json({ success: true });
+  } else {
+    // If the page is not found
+    response.status(404).json({ success: false, message: "Page not found" });
+  }
 });
 
 //---------------------------------------------- the data center for fetch requests
@@ -248,6 +280,7 @@ app.get("/show-courses", async (request, response) => {
     unenrolledCourses,
     enrolledCourses,
     allChapters,
+    csrfToken:request.csrfToken(),
   });
 });
 
@@ -275,6 +308,7 @@ app.get("/show-chapters", async (request, response) => {
       userRole,
       courseChapters,
       userName,
+      csrfToken:request.csrfToken(),
     });
   } catch (err) {
     console.log(err);
@@ -311,6 +345,7 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
+        csrfToken:request.csrfToken(),
       });
     } else if (userRole === "student" && isEnrolled) {
       // //console.log("Dear student you dont have access to this page");
@@ -319,6 +354,7 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
+        csrfToken:request.csrfToken(),
       });
     } else if (userRole === "student") {
       response.send(`
@@ -378,6 +414,7 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
+        csrfToken:request.csrfToken(),
       });
     } else {
       // //console.log("Dear student you dont have access to this page");
@@ -386,6 +423,7 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
+        csrfToken:request.csrfToken(),
       });
     }
   } catch (err) {
@@ -408,12 +446,14 @@ app.get("/courses", async (request, response) => {
       userRole,
       allCourses,
       edCreatedCourses,
+      csrfToken:request.csrfToken(),
     });
   } else {
     response.render("./student/courses", {
       userRole,
       allCourses,
       edEnrolledCourses,
+      csrfToken:request.csrfToken(),
     });
   }
 });
@@ -459,6 +499,7 @@ app.post("/page", async (request, response) => {
   const pg = await page.create({
     pageName: request.body.pageName,
     pageContent: request.body.pageContent,
+    completed:[],
     chapterId: request.body.chapterId,
   });
   const chapterPages = await page.findAll({
@@ -481,6 +522,7 @@ app.post("/page", async (request, response) => {
     chapterId: request.body.chapterId,
     chapterPages,
     userRole,
+    csrfToken:request.csrfToken(),
   });
 });
 
@@ -515,6 +557,7 @@ app.post("/chapter", async (request, response) => {
       userRole,
       chapterId,
       chapterPages,
+      csrfToken:request.csrfToken(),
     });
   } catch (err) {
     //console.log(err);
@@ -528,21 +571,13 @@ app.post("/course", async (request, response) => {
       educatorId: request.user.id,
     });
     const createdCourses = [course];
-    // const createdCourses = await coursesCreated.findAll({
-    //   where: { educatorId: request.user.id },
-    // });
-    // const allCourses = await coursesCreated.findAll();
-    // const enrolledCourses = await coursesEnrolled.findAll({
-    //   where: { studentId: request.user.id },
-    // });
-
-    // const allChapters = await chapter.findAll();
     const userRole = request.user.role;
     const userName = request.user.name;
     response.render("./show-courses", {
       userRole,
       userName,
       createdCourses,
+      csrfToken:request.csrfToken(),
     });
   } catch (err) {
     //console.log(err);
