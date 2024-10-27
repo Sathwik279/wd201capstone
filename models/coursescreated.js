@@ -16,9 +16,20 @@ module.exports = (sequelize, DataTypes) => {
       });
       coursesCreated.hasMany(models.coursesEnrolled, {
         foreignKey: "courseId",
+        onDelete:'CASCADE',
       });
       coursesCreated.hasMany(models.chapter, {
         foreignKey: "courseId",
+        onDelete:'CASCADE',
+      });
+    }
+
+    static remove(id,userId){
+      return this.destroy({
+        where: {
+          id: id,
+          educatorId:userId,
+        },
       });
     }
   }

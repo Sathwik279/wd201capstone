@@ -16,7 +16,7 @@ const bodyParser = require("body-parser");
 const passport = require("passport");
 
 const cookieParser = require("cookie-parser");//csrf needs this..
-const csrf = require("tiny-csrf");
+const csrf = require("csurf");
 
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
@@ -28,7 +28,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json()); //used to parse json data from body
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! some secret string"));
-app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
 
 app.set("view engine", "ejs"); //we are not using plain html
 app.set("views", path.join(__dirname, "views"));
@@ -41,6 +40,14 @@ app.use(
     },
   })
 );
+app.use(csrf({ 
+  cookie: true // Store CSRF token in cookies
+}));
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken(); // Generates a new token on every request
+  next();
+});
+
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -95,7 +102,9 @@ passport.deserializeUser((id, done) => {
     });
 });
 app.get("/", (request, response) => {
-  response.render("index"); //csrf not required
+  response.render("index",{
+    csrfToken:request.csrfToken(),
+  }); //csrf not required
 });
 
 app.get("/signup", (request, response) => {
@@ -174,7 +183,7 @@ app.get(
     }
   }
 );
-// ----------------------------------------------
+// ------------------------------------------------------
 app.get("/create-course", async (request, response) => {
   const userRole = request.user.role;
   response.render("./educator/create-course", {
@@ -269,9 +278,12 @@ app.get("/show-courses", async (request, response) => {
   const userRole = request.user.role;
   const userName = request.user.name;
   const userId = request.user.id;
+  console.log("********************userId"+userId);
+  const create = request.body.create?"create":"";
 
   // Render the page with all necessary data
   response.render("./show-courses", {
+    create,
     userRole,
     userId,
     userName,
@@ -570,17 +582,24 @@ app.post("/course", async (request, response) => {
       courseName: request.body.courseName,
       educatorId: request.user.id,
     });
+    console.log("course has been created successfully "+request.body.courseName);
     const createdCourses = [course];
     const userRole = request.user.role;
+    const userId = request.user.id;
+    const create = request.body.create?"create":"";
+                                                    /*THIS IS THE CONTAMINATED AREA */
     const userName = request.user.name;
+
     response.render("./show-courses", {
+      create,
       userRole,
+      userId,
       userName,
       createdCourses,
       csrfToken:request.csrfToken(),
     });
   } catch (err) {
-    //console.log(err);
+    console.log(err);
   }
 });
 
@@ -611,8 +630,28 @@ app.post("/enroll", async (request, response) => {
     }
     response.status(200).redirect("/educator");
   } catch (err) {
-    //console.log(err);
+    console.log(err);
   }
 });
+
+app.delete("/course/:id/:userId",connectEnsureLogin.ensureLoggedIn(),async(request,response)=>{
+
+  try {
+    // console.log("before todo");
+    const course = await coursesCreated.findByPk(request.params.id);
+    // console.log("after todo");
+    if (!course) {
+      return res
+        .status(404)
+        .json({ success: false, message: "course not found" });
+    }
+
+    await coursesCreated.remove(request.params.id, request.params.userId);
+    console.log({ success: true });
+    return response.json({ success: true });x
+  } catch (error) {
+    return response.status(422).json(error);
+  }
+})
 
 module.exports = app;

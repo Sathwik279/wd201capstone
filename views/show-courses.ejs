@@ -91,7 +91,7 @@
             courseId: courseId,
             userId: studentId,
             courseName: courseName,
-            "_csrf":token
+            _csrf:token
           }),
         }).then((res) => {
           if (res.status === 200) {
@@ -102,7 +102,24 @@
           }
         });
       }
-    </script>
+
+      function deleteCourse(id,userId){
+        fetch(`/course/${id}/${userId}`,{
+          method:"delete",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            _csrf: token,
+          }),
+        }).then((res) => {
+            if (res.ok) {
+              window.location.reload();//this line ensures page reload after deletion
+            }
+          })
+          .catch((err) => console.error(err));
+      }
+
+
+      </script>
   </head>
 
   <body class="bg-gray-100 text-gray-800 p-8 min-h-screen flex flex-col">
@@ -123,6 +140,17 @@
       >
         Name of the course: <%= course.courseName %>
       </h2>
+      <br>
+      <%if(create===""){%>
+      <h2
+        onClick="deleteCourse('<%= course.id %>', '<%= userId %>')"
+        class="text-xl font-semibold cursor-pointer text-blue-500"
+      >
+       Delete Course
+      </h2>
+      <%}%>
+
+      
 
       <form action="/create-chapter" method="get" class="mt-4">
         <input type="hidden" name="_csrf" value="<%=csrfToken%>">
