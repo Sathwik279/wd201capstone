@@ -18,7 +18,6 @@
         console.log("rendering the page")
         if (chapterPages.length > 0 && currentPageIndex < chapterPages.length) {
           document.getElementById('pageName').innerText = chapterPages[currentPageIndex].pageName;
-          
           document.getElementById('pageContent').innerText = chapterPages[currentPageIndex].pageContent;
           console.log("calling checkComplete")
           checkComplete();
@@ -47,7 +46,6 @@
 
       function checkComplete() {
         const pageId = chapterPages[currentPageIndex].id;
-
         fetch("/checkComplete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -80,11 +78,10 @@
         .then((data)=>{
           if(data.progress){
             progress = data.progress;
-            console.log("progress at client side",progress);
             progressBar.style.width = progress + '%';
+            progressBar.innerText = progress + '%';
           }
         })
-       
         }
 
       function markAsCompleted(userId,courseId) {
@@ -111,7 +108,6 @@
 
       window.onload = function() {
         renderPage();
-        
       };
     </script>
   </head>

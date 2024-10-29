@@ -6,6 +6,7 @@ module.exports = {
     await queryInterface.addColumn("coursesEnrolleds", "courseId", {
       type: Sequelize.INTEGER,
     });
+
     await queryInterface.addConstraint("coursesEnrolleds", {
       fields: ["courseId"],
       type: "foreign key",
@@ -13,14 +14,13 @@ module.exports = {
         table: "coursesCreateds",
         field: "id",
       },
-      // onDelete: 'cascade',daveMern
-
-      // onUpdate: 'cascade'
+      onDelete: 'CASCADE', // Enable cascading deletes
+      onUpdate: 'CASCADE', // Enable cascading updates (optional)
     });
   },
 
   async down (queryInterface, Sequelize) {
+    await queryInterface.removeConstraint("coursesEnrolleds", "coursesEnrolleds_courseId_fkey"); // Replace with the actual constraint name if needed
     await queryInterface.removeColumn("coursesEnrolleds", "courseId");
-
   }
 };

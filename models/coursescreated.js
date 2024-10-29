@@ -32,14 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
-    static remove(id,userId){
-      return this.destroy({
-        where: {
-          id: id,
-          educatorId:userId,
-        },
-      });
-    }
+  
   }
   coursesCreated.init({
     courseName: DataTypes.STRING,

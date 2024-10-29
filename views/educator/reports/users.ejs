@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<%=csrfToken%>"/>
+
+    <title>Student Progress</title>
+    <script>
+         var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+        // Assume `studentIds` is being passed from the server as a JSON array.
+        let studentIds = <%- JSON.stringify(studentIds) %>;
+        let courseId = <%- JSON.stringify(courseId) %>;
+
+        // Function to fetch progress for a student
+        async function fetchProgress(studentId) {
+            try {
+                const response = await fetch("/getProgress", {
+                   
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ studentId: studentId,courseId:courseId, _csrf:token, })
+                });
+                const data = await response.json();
+                return data.courseProg; // Expected to return a numeric progress value
+            } catch (error) {
+                console.error("Error fetching progress for student", studentId, error);
+                return 0; // Default to 0 if there’s an error
+            }
+        }
+
+        // Function to update each student's progress on page load
+        async function updateStudentProgress() {
+            for (const studentId of studentIds) {
+                const progress = await fetchProgress(studentId);
+                const listItem = document.getElementById(`student-${studentId}`);
+                listItem.textContent += ` - Progress: ${progress}%`;
+            }
+        }
+
+        // Call the function on page load
+        window.onload = updateStudentProgress;
+    </script>
+</head>
+<body>
+    <h1>Students and Progress</h1>
+    <ul>
+        <% studentIds.forEach(function(studentId) { %>
+            <li id="student-<%= studentId %>"><%= studentId %></li>
+        <% }); %>
+    </ul>
+</body>
+</html>

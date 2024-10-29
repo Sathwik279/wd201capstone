@@ -8,12 +8,16 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       User.hasMany(models.coursesCreated, {
         foreignKey: "educatorId",
+        onDelete: "CASCADE",
       });
       User.hasMany(models.coursesEnrolled, {
         foreignKey: "studentId",
+        onDelete: "CASCADE",
       });
       User.hasMany(models.pageCompletion,{
-        foreignKey:"userId"
+        foreignKey:"userId",
+        onDelete:"CASCADE"
+
       });
     }
 

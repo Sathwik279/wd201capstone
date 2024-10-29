@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<%=csrfToken%>"/>
+
+    <title>Document</title>
+    <script>
+        let courses = <%- JSON.stringify(courses) %>;
+        console.log(courses);
+
+    </script>
+</head>
+<body>
+    <h1>Courses</h1>
+    <ul>
+        <%for(let course of courses){%>
+            <a href="/reports/course/<%=course.id%>"><%=course.courseName%></a>
+        <%}%>
+    </ul>
+</body>
+</body>
+</html>

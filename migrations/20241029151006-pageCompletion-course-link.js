@@ -21,9 +21,9 @@ module.exports = {
         table: "coursesCreateds",
         field: "id",
       },
-      // onDelete: 'cascade',daveMern
+       onDelete: 'cascade',
 
-      // onUpdate: 'cascade'
+       onUpdate: 'cascade'
     });
   },
 

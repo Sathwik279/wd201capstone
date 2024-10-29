@@ -15,13 +15,13 @@ module.exports = {
         table: "chapters",
         field: "id",
       },
-      // onDelete: 'cascade',daveMern
-
-      // onUpdate: 'cascade'
+      onDelete: 'CASCADE', // Enable cascading deletes
+      onUpdate: 'CASCADE', // Enable cascading updates (optional)
     });
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.removeColumn("pages", "chapterId");
+    await queryInterface.removeConstraint("pages", "chapter_page_fk"); // Remove the constraint first
+    await queryInterface.removeColumn("pages", "chapterId"); // Then remove the column
   }
 };

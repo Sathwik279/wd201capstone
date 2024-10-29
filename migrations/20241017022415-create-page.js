@@ -15,9 +15,7 @@ module.exports = {
       pageContent: {
       type: Sequelize.TEXT 
       },
-      completed:{
-      type: Sequelize.ARRAY(Sequelize.INTEGER)
-      },
+
       createdAt: {
       allowNull: false,
       type: Sequelize.DATE

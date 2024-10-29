@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "chapterId",
       });
       page.hasMany(models.pageCompletion,{
-        foreignKey:"pageId"
+        foreignKey:"pageId",
+        onDelete:"CASCADE"
       });
       page.belongsTo(models.coursesCreated,{
         foreignKey:"courseId"
@@ -21,7 +22,6 @@ module.exports = (sequelize, DataTypes) => {
     {
       pageName: DataTypes.STRING,
       pageContent: DataTypes.TEXT,
-      completed: DataTypes.ARRAY(DataTypes.INTEGER),
     },
     {
       sequelize,
