@@ -21,6 +21,7 @@ const csrf = require("csurf");
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const localStrategy = require("passport-local");
+const user = require("./models/user");
 
 const saltRounds = 10;
 
@@ -470,6 +471,14 @@ app.get("/courses", async (request, response) => {
   }
 });
 
+app.get("/password",async(request,response)=>{
+  response.render("./password",
+    {
+      csrfToken:request.csrfToken(),
+    }
+  );
+})
+
 app.post("/users", async (request, response) => {
   const hashedPwd = await bcrypt.hashSync(request.body.password, saltRounds);
   try {
@@ -633,6 +642,35 @@ app.post("/enroll", async (request, response) => {
     console.log(err);
   }
 });
+
+app.post("/password",async(request,response)=>{
+  console.log("Hi hello guys")
+  const userId = request.user.id;
+  console.log("userId "+userId)
+  const user = await User.findByPk(userId);
+  console.log("username "+user.name);
+  const oldPass = request.body.oldPass;
+  const newPass = request.body.newPass;
+  console.log("oldPass "+oldPass);
+  console.log("newPass "+newPass);
+  const hashedPwd = await bcrypt.hashSync(newPass, 10);
+  const result = await bcrypt.compare(oldPass,user.password);
+    try{
+      if(result){
+        //update the old password
+        console.log("passwords match")
+        await user.updatePass(hashedPwd);
+        response.redirect("/login");
+      }
+      else{
+        console.log("passwords does not match");
+        return response.status(400).json({"content":"passwords dont match"});
+      }
+    }
+    catch(err){
+      return response.status(500).json(err);
+    }
+})
 
 app.delete("/course/:id/:userId",connectEnsureLogin.ensureLoggedIn(),async(request,response)=>{
 

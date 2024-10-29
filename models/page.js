@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
       page.belongsTo(models.chapter, {
         foreignKey: "chapterId",
       });
+      page.hasMany(models.pageCompletion,{
+        foreignKey:"pageId"
+      });
+      
     }
   }
   page.init(
