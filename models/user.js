@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.coursesEnrolled, {
         foreignKey: "studentId",
       });
-      User.hasMany(models.pageCompletions,{
+      User.hasMany(models.pageCompletion,{
         foreignKey:"userId"
       });
     }

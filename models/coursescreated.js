@@ -22,6 +22,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "courseId",
         onDelete:'CASCADE',
       });
+      coursesCreated.hasMany(models.page, {
+        foreignKey: "courseId",
+        onDelete:'CASCADE',
+      });
+      coursesCreated.hasMany(models.pageCompletion, {
+        foreignKey: "courseId",
+        onDelete:'CASCADE',
+      });
     }
 
     static remove(id,userId){

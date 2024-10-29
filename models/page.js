@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       page.hasMany(models.pageCompletion,{
         foreignKey:"pageId"
       });
+      page.belongsTo(models.coursesCreated,{
+        foreignKey:"courseId"
+      }
+      )
       
     }
   }

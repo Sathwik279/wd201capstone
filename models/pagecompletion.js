@@ -10,8 +10,11 @@ module.exports = (sequelize, DataTypes) => {
       pageCompletion.belongsTo(models.page,{
         foreignKey:"pageId"
       })
-      pageCompletion.belongsTo(models.user,{
+      pageCompletion.belongsTo(models.User,{
         foreignKey:"userId"
+      })
+      pageCompletion.belongsTo(models.coursesCreated,{
+        foreignKey:"courseId"
       })
     }
   }

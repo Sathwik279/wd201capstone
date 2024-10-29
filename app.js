@@ -7,6 +7,7 @@ const {
   coursesEnrolled,
   chapter,
   page,
+  pageCompletion
 } = require("./models");
 
 const path = require("path");
@@ -21,7 +22,7 @@ const csrf = require("csurf");
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const localStrategy = require("passport-local");
-const user = require("./models/user");
+
 
 const saltRounds = 10;
 
@@ -222,23 +223,7 @@ app.get("/create-page", async (request, response) => {
   });
 });
 
-app.get("/mark-as-completed/:pageId", async (request, response) => {
-  console.log("Hit the markAsCompleted route");
-  const pageId = request.params.pageId;
-  const pageToBeUpdated = await page.findByPk(pageId);
 
-  if (pageToBeUpdated) {
-    // Update the completed array by adding the user's ID
-    pageToBeUpdated.completed = [...pageToBeUpdated.completed, request.user.id];
-    await pageToBeUpdated.save();
-
-    // Send a JSON success response instead of redirecting
-    response.status(200).json({ success: true });
-  } else {
-    // If the page is not found
-    response.status(404).json({ success: false, message: "Page not found" });
-  }
-});
 
 //---------------------------------------------- the data center for fetch requests
 app.get("/fetch-chapters/:courseId/:role", async (request, response) => {
@@ -333,6 +318,7 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
     //console.log("chapterId" + request.params.chapterId);
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
+    const userId = request.user.id;
     const courseId = request.query.courseId;
     const userCreatedCourses = await coursesCreated.findAll({
       where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
@@ -346,13 +332,17 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
       where: { courseId, studentId: request.user.id },
     });
     const isEnrolled = enrolledCourse ? true : false;
-
+    const completedPages = await pageCompletion.findAll({
+      where :{userId:userId}
+    })
     if (
       (userRole === "educator" &&
         userCreatedCourseIds.includes(parseInt(courseId))) ||
       isEnrolled
     ) {
       response.render("./show-pages", {
+        completedPages,
+        userId,
         userCreatedCourseIds,
         courseId,
         chapterId,
@@ -363,6 +353,8 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
     } else if (userRole === "student" && isEnrolled) {
       // //console.log("Dear student you dont have access to this page");
       response.render("./show-pages", {
+        completedPages,
+        userId,
         courseId,
         chapterId,
         userRole,
@@ -405,9 +397,13 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
     //console.log("chapterId" + request.params.chapterId);
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
+    const userId = request.user.id;
     const chapterPages = await page.findAll({
       where: { chapterId: request.params.chapterId },
     });
+    const completedPages = await pageCompletion.findAll({
+      where :{userId:userId}
+    })
     const userCreatedCourses = await coursesCreated.findAll({
       where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
       attributes: ["id"], // only fetch course IDs
@@ -422,6 +418,8 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
 
     if (userRole === "educator") {
       response.render("./show-pages", {
+        completedPages,
+        userId,
         userCreatedCourseIds,
         courseId,
         chapterId,
@@ -432,6 +430,8 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
     } else {
       // //console.log("Dear student you dont have access to this page");
       response.render("./show-pages", {
+        completedPages,
+        userId,
         courseId,
         chapterId,
         userRole,
@@ -479,6 +479,64 @@ app.get("/password",async(request,response)=>{
   );
 })
 
+app.post("/checkProgress",async(request,response)=>{
+  const courseId = request.body.courseId;
+  const userId = request.body.userId;
+  const completedPages = await pageCompletion.findAll({
+    where:{
+      userId:userId,
+      courseId:courseId
+    }
+  })
+  console.log("completed pages count is "+completedPages.length);
+  const coursePages = await page.findAll({
+    where:{
+      courseId:courseId
+    }
+  })
+  console.log("total pages count is "+coursePages.length);
+  const progress = (completedPages.length/coursePages.length)*100;
+  console.log("progress is "+progress);
+  return response.json({progress:progress});
+})
+
+app.post("/checkComplete",async(request,response)=>{
+  console.log("*******************"+request.body.pageId);
+  const pageId = request.body.pageId;
+  const userId = request.body.userId;
+  const result = await pageCompletion.findOne({
+    where:{
+      pageId:pageId,
+      userId:userId
+    }
+  })
+  console.log("*******************result"+result);
+  if(result){
+    console.log("completed");
+    response.json({completed:true})
+  }
+  else{
+    console.log("not completed");
+    response.json({completed:false})
+  }
+});
+
+app.post("/markAsCompleted",async(request,response)=>{
+  const pageId = request.body.pageId;
+  const userId = request.body.userId;
+  const courseId = request.body.courseId;
+  try{
+  await pageCompletion.create({
+    pageId:pageId,
+    courseId:courseId,
+    userId:userId
+  })
+  response.status(200).json({completed:true})
+}catch(err){
+    console.log(err);
+  }
+})
+
 app.post("/users", async (request, response) => {
   const hashedPwd = await bcrypt.hashSync(request.body.password, saltRounds);
   try {
@@ -520,6 +578,7 @@ app.post("/page", async (request, response) => {
   const pg = await page.create({
     pageName: request.body.pageName,
     pageContent: request.body.pageContent,
+    courseId: request.body.courseId,
     completed:[],
     chapterId: request.body.chapterId,
   });
@@ -527,6 +586,7 @@ app.post("/page", async (request, response) => {
     where: { chapterId: request.body.chapterId },
   });
   const courseId = request.body.courseId;
+  const userId = request.user.id;
   const userRole = request.user.role;
   const userCreatedCourses = await coursesCreated.findAll({
     where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
@@ -538,6 +598,7 @@ app.post("/page", async (request, response) => {
   console.log("userCreatedCourseIds", userCreatedCourseIds);
 
   response.render("./show-pages", {
+    userId,
     userCreatedCourseIds,
     courseId,
     chapterId: request.body.chapterId,
@@ -561,6 +622,7 @@ app.post("/chapter", async (request, response) => {
 
     const userRole = request.user.role;
     const chapterId = chptr.id;
+    const userId = request.user.id;
     const courseId = request.body.courseId;
 
     const userCreatedCourses = await coursesCreated.findAll({
@@ -574,6 +636,7 @@ app.post("/chapter", async (request, response) => {
 
     response.render("./show-pages", {
       userCreatedCourseIds,
+      userId,
       courseId,
       userRole,
       chapterId,
