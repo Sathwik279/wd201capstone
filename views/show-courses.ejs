@@ -62,6 +62,8 @@
             } else {
               // Populate chapters list
               data.courseChapters.forEach((chapter) => {
+                const chapterContainer = document.createElement("div");
+                const deleteButton = document.createElement("button");
                 const chapterItem = document.createElement("li");
                 chapterItem.classList.add(
                   "bg-gray-100",
@@ -73,7 +75,40 @@
                 chapterItem.addEventListener("click", () => {
                   window.location.href = `/show-pages/${chapter.id}/${role}/${courseId}`;
                 });
-                chaptersList.appendChild(chapterItem);
+                chapterContainer.classList.add("flex", "justify-between");
+                deleteButton.textContent = "Delete";
+                deleteButton.classList.add(
+                  "bg-red-500",
+                  "text-white",
+                  "font-bold",
+                  "py-1",
+                  "px-2",
+                  "rounded",
+                  "hover:bg-red-600",
+                  "transition",
+                  "duration-200",
+                  "text-sm"
+                );
+                deleteButton.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  fetch(`/chapter/${chapter.id}`, {
+                    method: "delete",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      _csrf: token,
+                    }),
+                  })
+                    .then((res) => {
+                      if (res.ok) {
+                        fetchChapters(courseId, role, courseElement);
+                      }
+                    })
+                    .catch((err) => console.error(err));
+                });
+                chapterContainer.appendChild(chapterItem);
+                chapterContainer.appendChild(deleteButton);
+                chaptersList.appendChild(chapterContainer);
+                
               });
             }
           })

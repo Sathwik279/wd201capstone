@@ -816,4 +816,63 @@ app.delete("/course/:id/:userId", connectEnsureLogin.ensureLoggedIn(), async (re
   }
 });
 
+app.delete("/page", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
+  try {
+    const courseId = request.body.courseId;
+    const userId = request.body.userId;
+    const pageId = request.body.pageId;
+    console.log("entered the delete request");
+    // Find the course by ID and educator ID
+    const deletionPage = await page.findOne({
+      where: {
+        id: pageId,
+      }
+    });
+
+    if (!page) {
+      return response.status(404).json({ success: false, message: "page not found" });
+    }
+
+    // Delete the course directly
+    await page.destroy({
+      where: {
+        id: pageId,
+      }
+    });
+
+    return response.json({ success: true, message: "page successfully deleted" });
+  } catch (error) {
+    console.log(error);
+  }
+})
+
+app.delete("/chapter/:id", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {  
+  try {
+    const chapterId = request.params.id;
+    const userId = request.user.id;
+    console.log("entered the delete request");
+    // Find the course by ID and educator ID
+    const deletionChapter = await chapter.findOne({
+      where: {
+        id: chapterId,
+      }
+    });
+
+    if (!deletionChapter) {
+      return response.status(404).json({ success: false, message: "chapter not found" });
+    }
+
+    // Delete the course directly
+    await chapter.destroy({
+      where: {
+        id: chapterId,
+      }
+    });
+
+    return response.json({ success: true, message: "chapter successfully deleted" });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 module.exports = app;

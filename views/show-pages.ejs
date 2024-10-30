@@ -13,6 +13,7 @@
       const token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
       let chapterPages = <%- JSON.stringify(chapterPages) %>;
       let currentPageIndex = 0;
+      const pageId = chapterPages[currentPageIndex].id;
 
       function renderPage() {
         console.log("rendering the page")
@@ -33,6 +34,7 @@
         } else {
           alert("You are on the first page.");
         }
+        pageId = chapterPages[currentPageIndex].id;
       }
 
       function nextPage() {
@@ -42,6 +44,7 @@
         } else {
           alert("You are on the last page.");
         }
+        pageId = chapterPages[currentPageIndex].id;
       }
 
       function checkComplete() {
@@ -85,7 +88,7 @@
         }
 
       function markAsCompleted(userId,courseId) {
-        const pageId = chapterPages[currentPageIndex].id;
+        
 
         fetch("/markAsCompleted", {
           method: "POST",
@@ -104,6 +107,26 @@
           }
         })
         .catch((err) => console.error(err));
+      }
+
+      function deletePage(){
+        fetch("/page",{
+          method:"DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _csrf: token,
+            pageId: pageId,
+            userId: '<%=userId%>',
+            courseId:'<%=courseId%>'
+          }),
+        }
+        ).then((res) => {
+          if (res.ok) {
+            location.reload(); // Reload the whole page
+          }
+        }).catch((err) => console.error(err));
+
+
       }
 
       window.onload = function() {
@@ -126,9 +149,15 @@
         <h2 id="pageName" class="text-2xl font-semibold mb-4 text-center"></h2>
         <h3 id="pageContent" class="text-lg mb-6 text-center"></h3>
         <div class="flex justify-between">
-          <button onclick="prevPage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+          <button onClick="prevPage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
             Prev Page
           </button>
+          <%if(userRole==='educator'){%>
+          <button onClick="deletePage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+            Delete Page
+          </button>
+         <%}%>
+          
           <button
             id="markAsCompleted"
             onClick="markAsCompleted('<%= userId %>','<%= courseId %>')"
@@ -136,7 +165,7 @@
           >
             Mark as Completed
           </button>
-          <button onclick="nextPage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+          <button onClick="nextPage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
             Next Page
           </button>
         </div>
