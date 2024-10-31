@@ -1,4 +1,4 @@
-This repository contains the files required for the pupil first wd201 capstone project 
+** This repository contains the files required for the pupil first wd201 capstone project 
 the __tests__ folder consists of the files required for basic tests
 the .husky folder contains pre commit hooks requierd for linting and tests
 the config folder contains deployment configuration for 3 different deployment environments development,test and production.
