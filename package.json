@@ -13,7 +13,7 @@
   "lint-staged": {
     "/*.js": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write" 
     ]
   },
   "author": "sathwik <ssathwik31831@gmail.com>",
