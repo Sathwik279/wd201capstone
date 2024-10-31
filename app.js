@@ -7,7 +7,7 @@ const {
   coursesEnrolled,
   chapter,
   page,
-  pageCompletion
+  pageCompletion,
 } = require("./models");
 
 const path = require("path");
@@ -16,14 +16,13 @@ const bodyParser = require("body-parser");
 
 const passport = require("passport");
 
-const cookieParser = require("cookie-parser");//csrf needs this..
+const cookieParser = require("cookie-parser"); //csrf needs this..
 const csrf = require("csurf");
 
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const localStrategy = require("passport-local");
 const { INTEGER } = require("sequelize");
-
 
 const saltRounds = 10;
 
@@ -43,14 +42,16 @@ app.use(
     },
   })
 );
-app.use(csrf({ 
-  cookie: true // Store CSRF token in cookies
-}));
+
+app.use(
+  csrf({
+    cookie: true, // Store CSRF token in cookies
+  })
+);
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken(); // Generates a new token on every request
   next();
 });
-
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -70,7 +71,6 @@ passport.use(
             return done(null, false, { message: "User not found" });
           }
 
-          // Check password (use bcrypt.compare if passwords are hashed)
           const isValidPassword = await bcrypt.compare(password, user.password);
           if (!isValidPassword) {
             return done(null, false, { message: "Invalid password" });
@@ -92,7 +92,6 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  ////("Serializing the user in session", user.id);
   done(null, user.id);
 });
 passport.deserializeUser((id, done) => {
@@ -104,22 +103,23 @@ passport.deserializeUser((id, done) => {
       done(error, null);
     });
 });
+
 app.get("/", (request, response) => {
-  response.render("index",{
-    csrfToken:request.csrfToken(),
+  response.render("index", {
+    csrfToken: request.csrfToken(),
   }); //csrf not required
 });
 
 app.get("/signup", (request, response) => {
-  response.render("signup",{
-    csrfToken:request.csrfToken(),  //csrf done
+  response.render("signup", {
+    csrfToken: request.csrfToken(),
   });
 });
- 
+
 app.get("/login", (request, response) => {
   response.render("login", {
     title: "Login",
-    csrfToken:request.csrfToken(),  //csrf done
+    csrfToken: request.csrfToken(),
   });
 });
 
@@ -133,40 +133,40 @@ app.get("/signout", (request, response, next) => {
   });
 });
 
-app.get("/reports/course",async(request,response)=>{
+app.get("/reports/course", async (request, response) => {
   const userId = request.user.id;
   const courses = await coursesCreated.findAll({
-    where:{educatorId:userId}
-  })
-  const courseIds = courses.map((course)=>course.id);
-  console.log("Courses "+courseIds);
-  response.render("./educator/reports/index",{
-    csrfToken:request.csrfToken(),
-    courses:courses,
+    where: { educatorId: userId },
   });
-})
-app.get("/reports/course/:courseId",async(request,response)=>{
-  const courseId = request.params.courseId;
-  const students = await coursesEnrolled.findAll({
-    where:{courseId:courseId}
-  })
-  const studentIds = students.map((student)=>student.studentId);
-
-
-  response.render("./educator/reports/users",{
-    csrfToken:request.csrfToken(),
-    courseId:courseId,
-    studentIds:studentIds,
+  const courseIds = courses.map((course) => course.id);
+  console.log("Courses " + courseIds);
+  response.render("./educator/reports/index", {
+    csrfToken: request.csrfToken(),
+    courses: courses,
   });
 });
-app.post("/getProgress",async(request,response)=>{
+app.get("/reports/course/:courseId", async (request, response) => {
+  const courseId = request.params.courseId;
+  const students = await coursesEnrolled.findAll({
+    where: { courseId: courseId },
+  });
+  const studentIds = students.map((student) => student.studentId);
+
+  response.render("./educator/reports/users", {
+    csrfToken: request.csrfToken(),
+    courseId: courseId,
+    studentIds: studentIds,
+  });
+});
+
+app.post("/getProgress", async (request, response) => {
   const courseId = request.body.courseId;
   const studentId = request.body.studentId;
   const courseProg = await coursesEnrolled.findOne({
-    where:{courseId:courseId,studentId:studentId}
+    where: { courseId: courseId, studentId: studentId },
   });
-  console.log("course progrss "+courseProg.courseProgress);
-  response.json({courseProg:courseProg.courseProgress});
+  console.log("course progrss " + courseProg.courseProgress);
+  response.json({ courseProg: courseProg.courseProgress });
 });
 
 // ----------------------------------------------
@@ -196,7 +196,7 @@ app.get(
         userRole,
         allCourses,
         userId,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     } else {
       response.json({});
@@ -211,12 +211,11 @@ app.get(
     const userId = request.user.id;
     const userRole = request.user.role;
     const userName = request.user.name;
-    ////("userId", userId);
     if (request.accepts("html")) {
       response.render("./student/index", {
         userRole,
         userName,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     } else {
       response.json({});
@@ -224,13 +223,20 @@ app.get(
   }
 );
 // ------------------------------------------------------
-app.get("/create-course", async (request, response) => {
-  const userRole = request.user.role;
-  response.render("./educator/create-course", {
-    userRole,
-    csrfToken:request.csrfToken(),
-  });
-});
+app.get(
+  "/create-course",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    if (!request.user) {
+      return response.redirect("/login"); // Redirect if user is not authenticated
+    }
+    const userRole = request.user.role;
+    response.render("./educator/create-course", {
+      userRole,
+      csrfToken: request.csrfToken(),
+    });
+  }
+);
 
 app.get("/create-chapter", async (request, response) => {
   const courseId = request.query.courseId;
@@ -239,7 +245,7 @@ app.get("/create-chapter", async (request, response) => {
   response.render("./educator/create-chapter", {
     courseId,
     userRole,
-    csrfToken:request.csrfToken(),
+    csrfToken: request.csrfToken(),
   });
 });
 
@@ -255,13 +261,10 @@ app.get("/create-page", async (request, response) => {
     courseChapters,
     chapterId,
     userRole,
-    csrfToken:request.csrfToken(),
+    csrfToken: request.csrfToken(),
   });
 });
 
-
-
-//---------------------------------------------- the data center for fetch requests
 app.get("/fetch-chapters/:courseId/:role", async (request, response) => {
   const allChapters = await chapter.findAll();
   const courseChapters = await chapter.findAll({
@@ -271,39 +274,26 @@ app.get("/fetch-chapters/:courseId/:role", async (request, response) => {
 });
 
 app.get("/show-courses", async (request, response) => {
-  // Fetch courses created by the educator
   const createdCourses = await coursesCreated.findAll({
     where: { educatorId: request.user.id },
   });
 
-  // Fetch the courses where the student is already enrolled
   const enrolledCourses = await coursesEnrolled.findAll({
     where: { studentId: request.user.id },
   });
-  //("enrolledCourses", enrolledCourses);
 
-  // Convert enrolledCourses into an array of course IDs
   const enrolledCourseIds = enrolledCourses.map((course) => course.courseId);
 
-  // Fetch all courses available (coursesCreated)
   const allCourses = await coursesCreated.findAll();
 
-  // Filter out the courses from createdCourses that the student has already enrolled in
   const unenrolledCourses = allCourses.filter(
     (course) => !enrolledCourseIds.includes(course.id)
   );
-
-  ////("enrolledCourses", enrolledCourses);
-  // Fetch all chapters
   const allChapters = await chapter.findAll();
-
   const userRole = request.user.role;
   const userName = request.user.name;
   const userId = request.user.id;
-  //("********************userId"+userId);
-  const create = request.body.create?"create":"";
-
-  // Render the page with all necessary data
+  const create = request.body.create ? "create" : "";
   response.render("./show-courses", {
     create,
     userRole,
@@ -314,7 +304,7 @@ app.get("/show-courses", async (request, response) => {
     unenrolledCourses,
     enrolledCourses,
     allChapters,
-    csrfToken:request.csrfToken(),
+    csrfToken: request.csrfToken(),
   });
 });
 
@@ -322,17 +312,16 @@ app.get("/show-chapters", async (request, response) => {
   try {
     const userRole = request.user.role;
     const courseId = request.query.courseId;
-    //("courseId", courseId);
-    //(typeof courseId);
+
     const courseChapters = await chapter.findAll({
       where: { courseId: parseInt(courseId) },
     });
-    //("courseChapters", courseChapters);
+
     const userName = request.user.name;
 
     const userCreatedCourses = await coursesCreated.findAll({
-      where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
-      attributes: ["id"], // only fetch course IDs
+      where: { educatorId: request.user.id },
+      attributes: ["id"],
     });
     const userCreatedCourseIds = userCreatedCourses.map((course) => course.id);
 
@@ -342,7 +331,7 @@ app.get("/show-chapters", async (request, response) => {
       userRole,
       courseChapters,
       userName,
-      csrfToken:request.csrfToken(),
+      csrfToken: request.csrfToken(),
     });
   } catch (err) {
     //(err);
@@ -351,14 +340,13 @@ app.get("/show-chapters", async (request, response) => {
 
 app.get("/show-pages/:chapterId/:role", async (request, response) => {
   try {
-    ////("chapterId" + request.params.chapterId);
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
     const userId = request.user.id;
     const courseId = request.query.courseId;
     const userCreatedCourses = await coursesCreated.findAll({
-      where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
-      attributes: ["id"], // only fetch course IDs
+      where: { educatorId: request.user.id },
+      attributes: ["id"],
     });
     const userCreatedCourseIds = userCreatedCourses.map((course) => course.id);
     const chapterPages = await page.findAll({
@@ -369,8 +357,8 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
     });
     const isEnrolled = enrolledCourse ? true : false;
     const completedPages = await pageCompletion.findAll({
-      where :{userId:userId}
-    })
+      where: { userId: userId },
+    });
     if (
       (userRole === "educator" &&
         userCreatedCourseIds.includes(parseInt(courseId))) ||
@@ -384,10 +372,9 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     } else if (userRole === "student" && isEnrolled) {
-      // ////("Dear student you dont have access to this page");
       response.render("./show-pages", {
         completedPages,
         userId,
@@ -395,7 +382,7 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     } else if (userRole === "student") {
       response.send(`
@@ -428,9 +415,9 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
     ////(err);
   }
 });
+
 app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
   try {
-    ////("chapterId" + request.params.chapterId);
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
     const userId = request.user.id;
@@ -438,19 +425,16 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
       where: { chapterId: request.params.chapterId },
     });
     const completedPages = await pageCompletion.findAll({
-      where :{userId:userId}
-    })
-    const userCreatedCourses = await coursesCreated.findAll({
-      where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
-      attributes: ["id"], // only fetch course IDs
+      where: { userId: userId },
     });
-    //("userCreatedCourses", userCreatedCourses);
+    const userCreatedCourses = await coursesCreated.findAll({
+      where: { educatorId: request.user.id },
+      attributes: ["id"],
+    });
 
     const userCreatedCourseIds = userCreatedCourses.map((course) => course.id);
-    //("userCreatedCourseIds", userCreatedCourseIds);
 
     const courseId = request.params.courseId;
-    //("courseId", courseId);
 
     if (userRole === "educator") {
       response.render("./show-pages", {
@@ -461,10 +445,9 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     } else {
-      // ////("Dear student you dont have access to this page");
       response.render("./show-pages", {
         completedPages,
         userId,
@@ -472,11 +455,11 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
         chapterId,
         userRole,
         chapterPages,
-        csrfToken:request.csrfToken(),
+        csrfToken: request.csrfToken(),
       });
     }
   } catch (err) {
-    ////(err);
+    console.log(err);
   }
 });
 
@@ -495,95 +478,89 @@ app.get("/courses", async (request, response) => {
       userRole,
       allCourses,
       edCreatedCourses,
-      csrfToken:request.csrfToken(),
+      csrfToken: request.csrfToken(),
     });
   } else {
     response.render("./student/courses", {
       userRole,
       allCourses,
       edEnrolledCourses,
-      csrfToken:request.csrfToken(),
+      csrfToken: request.csrfToken(),
     });
   }
 });
 
-app.get("/password",async(request,response)=>{
-  response.render("./password",
-    {
-      csrfToken:request.csrfToken(),
-    }
-  );
-})
+app.get("/password", async (request, response) => {
+  response.render("./password", {
+    csrfToken: request.csrfToken(),
+  });
+});
 
-
-
-app.post("/checkProgress",async(request,response)=>{
+app.post("/checkProgress", async (request, response) => {
   const courseId = request.body.courseId;
   const userId = request.body.userId;
   const completedPages = await pageCompletion.findAll({
-    where:{
-      userId:userId,
-      courseId:courseId
-    }
-  })
-  //("completed pages count is "+completedPages.length);
+    where: {
+      userId: userId,
+      courseId: courseId,
+    },
+  });
+
   const coursePages = await page.findAll({
-    where:{
-      courseId:courseId
-    }
-  })
-  //("total pages count is "+coursePages.length);
+    where: {
+      courseId: courseId,
+    },
+  });
+
   const progress = (completedPages.length / coursePages.length) * 100;
 
-  // Update the courseProgress in the coursesEnrolled table
   await coursesEnrolled.update(
     { courseProgress: parseInt(progress) },
     { where: { courseId: courseId, studentId: userId } }
   );
-  //("progress is "+progress);
-  return response.json({progress:progress});
-})
 
-app.post("/checkComplete",async(request,response)=>{
+  return response.json({ progress: progress });
+});
 
+app.post("/checkComplete", async (request, response) => {
   const pageId = request.body.pageId;
   const userId = request.body.userId;
-  try{
-  const result = await pageCompletion.findOne({
-    where:{
-      pageId:pageId,
-      userId:userId
-    }
-  })
-    console.log("current page id is "+pageId);
+  try {
+    const result = await pageCompletion.findOne({
+      where: {
+        pageId: pageId,
+        userId: userId,
+      },
+    });
+    console.log("current page id is " + pageId);
 
-  if(result){
-    console.log("completed");
-    response.json({completed:true})
-  }
-  else{
-    console.log("not completed");
-    response.json({completed:false})
-  }}catch(err){
+    if (result) {
+      console.log("completed");
+      response.json({ completed: true });
+    } else {
+      console.log("not completed");
+      response.json({ completed: false });
+    }
+  } catch (err) {
     console.log(err);
   }
 });
 
-app.post("/markAsCompleted",async(request,response)=>{
+app.post("/markAsCompleted", async (request, response) => {
   const pageId = request.body.pageId;
   const userId = request.body.userId;
   const courseId = request.body.courseId;
-  try{
-  await pageCompletion.create({
-    pageId:pageId,
-    courseId:courseId,
-    userId:userId
-  })
-  response.status(200).json({completed:true})
-}catch(err){
+  try {
+    await pageCompletion.create({
+      pageId: pageId,
+      courseId: courseId,
+      userId: userId,
+    });
+    response.status(200).json({ completed: true });
+  } catch (err) {
     console.log(err);
   }
-})
+});
 
 app.post("/users", async (request, response) => {
   const hashedPwd = await bcrypt.hashSync(request.body.password, saltRounds);
@@ -596,7 +573,7 @@ app.post("/users", async (request, response) => {
     });
     request.login(user, (err) => {
       if (err) {
-        ////(err);
+        console.log(err);
       }
       if (user.role === "educator") response.redirect("/educator");
       else {
@@ -604,7 +581,27 @@ app.post("/users", async (request, response) => {
       }
     });
   } catch (error) {
-    ////(error);
+    console.log(error);
+  }
+});
+
+app.post("/api/user", async (request, response) => {
+  const hashedPwd = await bcrypt.hashSync(request.body.password, saltRounds);
+  try {
+    const user = await User.create({
+      name: request.body.name,
+      email: request.body.email,
+      password: hashedPwd,
+      role: request.body.role,
+    });
+    request.login(user, (err) => {
+      if (err) {
+        console.log(err);
+      }
+      response.status(201).json({ user });
+    });
+  } catch (error) {
+    console.log(error);
   }
 });
 
@@ -627,7 +624,7 @@ app.post("/page", async (request, response) => {
     pageName: request.body.pageName,
     pageContent: request.body.pageContent,
     courseId: request.body.courseId,
-    completed:[],
+    completed: [],
     chapterId: request.body.chapterId,
   });
   const chapterPages = await page.findAll({
@@ -637,13 +634,11 @@ app.post("/page", async (request, response) => {
   const userId = request.user.id;
   const userRole = request.user.role;
   const userCreatedCourses = await coursesCreated.findAll({
-    where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
-    attributes: ["id"], // only fetch course IDs
+    where: { educatorId: request.user.id },
+    attributes: ["id"],
   });
-  //("userCreatedCourses", userCreatedCourses);
 
   const userCreatedCourseIds = userCreatedCourses.map((course) => course.id);
-  //("userCreatedCourseIds", userCreatedCourseIds);
 
   response.render("./show-pages", {
     userId,
@@ -652,12 +647,11 @@ app.post("/page", async (request, response) => {
     chapterId: request.body.chapterId,
     chapterPages,
     userRole,
-    csrfToken:request.csrfToken(),
+    csrfToken: request.csrfToken(),
   });
 });
 
 app.post("/chapter", async (request, response) => {
-  //first find the courses
   try {
     const chptr = await chapter.create({
       chapterName: request.body.chapterName,
@@ -674,13 +668,10 @@ app.post("/chapter", async (request, response) => {
     const courseId = request.body.courseId;
 
     const userCreatedCourses = await coursesCreated.findAll({
-      where: { educatorId: request.user.id }, // assuming 'userId' field refers to the creator of the course
-      attributes: ["id"], // only fetch course IDs
+      where: { educatorId: request.user.id },
+      attributes: ["id"],
     });
-    //("userCreatedCourses", userCreatedCourses);
-
     const userCreatedCourseIds = userCreatedCourses.map((course) => course.id);
-    //("userCreatedCourseIds", userCreatedCourseIds);
 
     response.render("./show-pages", {
       userCreatedCourseIds,
@@ -689,10 +680,10 @@ app.post("/chapter", async (request, response) => {
       userRole,
       chapterId,
       chapterPages,
-      csrfToken:request.csrfToken(),
+      csrfToken: request.csrfToken(),
     });
   } catch (err) {
-    ////(err);
+    console.log(err);
   }
 });
 
@@ -702,12 +693,10 @@ app.post("/course", async (request, response) => {
       courseName: request.body.courseName,
       educatorId: request.user.id,
     });
-    //("course has been created successfully "+request.body.courseName);
     const createdCourses = [course];
     const userRole = request.user.role;
     const userId = request.user.id;
-    const create = request.body.create?"create":"";
-                                                    /*THIS IS THE CONTAMINATED AREA */
+    const create = request.body.create ? "create" : "";
     const userName = request.user.name;
 
     response.render("./show-courses", {
@@ -716,10 +705,10 @@ app.post("/course", async (request, response) => {
       userId,
       userName,
       createdCourses,
-      csrfToken:request.csrfToken(),
+      csrfToken: request.csrfToken(),
     });
   } catch (err) {
-    //(err);
+    console.log(err);
   }
 });
 
@@ -729,7 +718,6 @@ app.post("/enroll", async (request, response) => {
   try {
     const alreadyEnrolled = await coursesEnrolled.findOne({
       where: { courseId, studentId: userId },
-      //this finds that if the student is already enrolled in the course
     });
 
     if (alreadyEnrolled && request.user.role === "educator") {
@@ -739,7 +727,6 @@ app.post("/enroll", async (request, response) => {
       response.redirect("/student");
     }
 
-    // Enroll the student in the course
     await coursesEnrolled.create({
       courseId,
       studentId: userId,
@@ -754,156 +741,163 @@ app.post("/enroll", async (request, response) => {
   }
 });
 
-app.post("/password",async(request,response)=>{
-  //("Hi hello guys")
+app.post("/password", async (request, response) => {
   const userId = request.user.id;
-  //("userId "+userId)
   const user = await User.findByPk(userId);
-  //("username "+user.name);
   const oldPass = request.body.oldPass;
   const newPass = request.body.newPass;
-  //("oldPass "+oldPass);
-  //("newPass "+newPass);
   const hashedPwd = await bcrypt.hashSync(newPass, 10);
-  const result = await bcrypt.compare(oldPass,user.password);
-    try{
-      if(result){
-        //update the old password
-        //("passwords match")
-        await user.updatePass(hashedPwd);
-        response.redirect("/login");
-      }
-      else{
-        //("passwords does not match");
-        return response.status(400).json({"content":"passwords dont match"});
-      }
-    }
-    catch(err){
-      return response.status(500).json(err);
-    }
-})
-
-app.put("/page", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
-  try{
-    const pageId = request.body.pageId;
- 
-    const pageContent = request.body.pageContent;
-
-   
-
-
-    // Find the page by ID
-    const pg = await page.findOne({
-      where: {
-        id: pageId,
-      },
-    });
-
-    if (!pg) {
-      return response.status(404).json({ success: false, message: "Page not found" });
-    }
-
-    // Update the page directly
-    await pg.update({
-   
-      pageContent,
-    });
-
-    return response.json({ success: true, message: "Page successfully updated" });
-
-    
-  }catch(err){
-    console.log(err);
-  }});
-
-app.delete("/course/:id/:userId", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
+  const result = await bcrypt.compare(oldPass, user.password);
   try {
-    const courseId = request.params.id;
-    const userId = request.params.userId;
-
-    // Find the course by ID and educator ID
-    const course = await coursesCreated.findOne({
-      where: {
-        id: courseId,
-        educatorId: userId
-      }
-    });
-
-    if (!course) {
-      return response.status(404).json({ success: false, message: "Course not found" });
+    if (result) {
+      await user.updatePass(hashedPwd);
+      response.redirect("/login");
+    } else {
+      return response.status(400).json({ content: "passwords dont match" });
     }
-
-    // Delete the course directly
-    await coursesCreated.destroy({
-      where: {
-        id: courseId,
-        educatorId: userId
-      }
-    });
-
-    return response.json({ success: true, message: "Course successfully deleted" });
-  } catch (error) {
-    return response.status(422).json({ success: false, message: "The error is " + error.message });
+  } catch (err) {
+    return response.status(500).json(err);
   }
 });
 
-app.delete("/page", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
-  try {
-    const courseId = request.body.courseId;
-    const userId = request.body.userId;
-    const pageId = request.body.pageId;
-    console.log("entered the delete request");
-    // Find the course by ID and educator ID
-    const deletionPage = await page.findOne({
-      where: {
-        id: pageId,
-      }
-    });
+app.put(
+  "/page",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    try {
+      const pageId = request.body.pageId;
+      const pageContent = request.body.pageContent;
+      const pg = await page.findOne({
+        where: {
+          id: pageId,
+        },
+      });
 
-    if (!page) {
-      return response.status(404).json({ success: false, message: "page not found" });
+      if (!pg) {
+        return response
+          .status(404)
+          .json({ success: false, message: "Page not found" });
+      }
+      await pg.update({
+        pageContent,
+      });
+      return response.json({
+        success: true,
+        message: "Page successfully updated",
+      });
+    } catch (err) {
+      console.log(err);
     }
-
-    // Delete the course directly
-    await page.destroy({
-      where: {
-        id: pageId,
-      }
-    });
-
-    return response.json({ success: true, message: "page successfully deleted" });
-  } catch (error) {
-    console.log(error);
   }
-})
+);
 
-app.delete("/chapter/:id", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {  
-  try {
-    const chapterId = request.params.id;
-    const userId = request.user.id;
-    console.log("entered the delete request");
-    // Find the course by ID and educator ID
-    const deletionChapter = await chapter.findOne({
-      where: {
-        id: chapterId,
+app.delete(
+  "/course/:id/:userId",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    try {
+      const courseId = request.params.id;
+      const userId = request.params.userId;
+      const course = await coursesCreated.findOne({
+        where: {
+          id: courseId,
+          educatorId: userId,
+        },
+      });
+
+      if (!course) {
+        return response
+          .status(404)
+          .json({ success: false, message: "Course not found" });
       }
-    });
+      await coursesCreated.destroy({
+        where: {
+          id: courseId,
+          educatorId: userId,
+        },
+      });
 
-    if (!deletionChapter) {
-      return response.status(404).json({ success: false, message: "chapter not found" });
+      return response.json({
+        success: true,
+        message: "Course successfully deleted",
+      });
+    } catch (error) {
+      return response
+        .status(422)
+        .json({ success: false, message: "The error is " + error.message });
     }
-
-    // Delete the course directly
-    await chapter.destroy({
-      where: {
-        id: chapterId,
-      }
-    });
-
-    return response.json({ success: true, message: "chapter successfully deleted" });
-  } catch (error) {
-    console.log(error);
   }
-});
+);
+
+app.delete(
+  "/page",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    try {
+      const courseId = request.body.courseId;
+      const userId = request.body.userId;
+      const pageId = request.body.pageId;
+      console.log("entered the delete request");
+      const deletionPage = await page.findOne({
+        where: {
+          id: pageId,
+        },
+      });
+
+      if (!page) {
+        return response
+          .status(404)
+          .json({ success: false, message: "page not found" });
+      }
+      await page.destroy({
+        where: {
+          id: pageId,
+        },
+      });
+
+      return response.json({
+        success: true,
+        message: "page successfully deleted",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
+app.delete(
+  "/chapter/:id",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    try {
+      const chapterId = request.params.id;
+      const userId = request.user.id;
+      console.log("entered the delete request");
+      const deletionChapter = await chapter.findOne({
+        where: {
+          id: chapterId,
+        },
+      });
+
+      if (!deletionChapter) {
+        return response
+          .status(404)
+          .json({ success: false, message: "chapter not found" });
+      }
+      await chapter.destroy({
+        where: {
+          id: chapterId,
+        },
+      });
+
+      return response.json({
+        success: true,
+        message: "chapter successfully deleted",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
 
 module.exports = app;

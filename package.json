@@ -4,7 +4,9 @@
   "description": "This project contains the learning management system ",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:create:test": "NODE_ENV=test npx sequelize-cli db:create",
+    "pretest": "NODE_ENV=test npx sequelize-cli db:drop && NODE_ENV=test npx sequelize-cli db:create",
+    "test": "NODE_ENV=test jest --detectOpenHandles",
     "start": "nodemon --watch . --ext '*'"
   },
   "author": "sathwik <ssathwik31831@gmail.com>",
@@ -12,16 +14,17 @@
   "dependencies": {
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
-    "cheerio": "^1.0.0",
     "compromise": "^14.14.0",
     "connect-ensure-login": "^0.1.1",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.7",
     "csurf": "^1.10.0",
+    "deve": "^0.0.0",
     "dotenv": "^10.0.0",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "jest": "^29.7.0",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^3.3.7",
     "nodemon": "^3.1.7",
@@ -32,5 +35,9 @@
     "sequelize": "^6.37.3",
     "sequelize-cli": "^6.6.2",
     "tiny-csrf": "^1.1.4"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0",
+    "supertest": "^7.0.0"
   }
 }
