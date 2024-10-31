@@ -39,7 +39,7 @@ const logout = async (agent) => {
   return res;
 }
 
-describe("course test suite", () => {
+describe("basic test suite", () => {
   beforeAll(async () => {
     await db.sequelize.sync({ force: true });
     server = app.listen(3000, () => {});

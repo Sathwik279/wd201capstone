@@ -133,7 +133,7 @@ app.get("/signout", (request, response, next) => {
   });
 });
 
-app.get("/reports/course", async (request, response) => {
+app.get("/reports/course",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const userId = request.user.id;
   const courses = await coursesCreated.findAll({
     where: { educatorId: userId },
@@ -145,7 +145,7 @@ app.get("/reports/course", async (request, response) => {
     courses: courses,
   });
 });
-app.get("/reports/course/:courseId", async (request, response) => {
+app.get("/reports/course/:courseId",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const courseId = request.params.courseId;
   const students = await coursesEnrolled.findAll({
     where: { courseId: courseId },
@@ -159,7 +159,7 @@ app.get("/reports/course/:courseId", async (request, response) => {
   });
 });
 
-app.post("/getProgress", async (request, response) => {
+app.post("/getProgress",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const courseId = request.body.courseId;
   const studentId = request.body.studentId;
   const courseProg = await coursesEnrolled.findOne({
@@ -238,7 +238,7 @@ app.get(
   }
 );
 
-app.get("/create-chapter", async (request, response) => {
+app.get("/create-chapter",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const courseId = request.query.courseId;
   const userRole = request.user.role;
 
@@ -249,7 +249,7 @@ app.get("/create-chapter", async (request, response) => {
   });
 });
 
-app.get("/create-page", async (request, response) => {
+app.get("/create-page",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const chapterId = request.query.chapterId;
   const userRole = request.user.role;
   const courseId = request.query.courseId;
@@ -265,7 +265,7 @@ app.get("/create-page", async (request, response) => {
   });
 });
 
-app.get("/fetch-chapters/:courseId/:role", async (request, response) => {
+app.get("/fetch-chapters/:courseId/:role",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const allChapters = await chapter.findAll();
   const courseChapters = await chapter.findAll({
     where: { courseId: request.params.courseId },
@@ -273,7 +273,7 @@ app.get("/fetch-chapters/:courseId/:role", async (request, response) => {
   response.json({ allChapters, courseChapters });
 });
 
-app.get("/show-courses", async (request, response) => {
+app.get("/show-courses",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const createdCourses = await coursesCreated.findAll({
     where: { educatorId: request.user.id },
   });
@@ -308,7 +308,7 @@ app.get("/show-courses", async (request, response) => {
   });
 });
 
-app.get("/show-chapters", async (request, response) => {
+app.get("/show-chapters",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const userRole = request.user.role;
     const courseId = request.query.courseId;
@@ -338,7 +338,7 @@ app.get("/show-chapters", async (request, response) => {
   }
 });
 
-app.get("/show-pages/:chapterId/:role", async (request, response) => {
+app.get("/show-pages/:chapterId/:role",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
@@ -416,7 +416,7 @@ app.get("/show-pages/:chapterId/:role", async (request, response) => {
   }
 });
 
-app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
+app.get("/show-pages/:chapterId/:role/:courseId",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const chapterId = request.params.chapterId;
     const userRole = request.params.role;
@@ -463,7 +463,7 @@ app.get("/show-pages/:chapterId/:role/:courseId", async (request, response) => {
   }
 });
 
-app.get("/courses", async (request, response) => {
+app.get("/courses",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const userRole = request.user.role;
   const allCourses = await coursesCreated.findAll();
   const edCreatedCourses = await coursesCreated.findAll({
@@ -490,13 +490,13 @@ app.get("/courses", async (request, response) => {
   }
 });
 
-app.get("/password", async (request, response) => {
+app.get("/password",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   response.render("./password", {
     csrfToken: request.csrfToken(),
   });
 });
 
-app.post("/checkProgress", async (request, response) => {
+app.post("/checkProgress",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const courseId = request.body.courseId;
   const userId = request.body.userId;
   const completedPages = await pageCompletion.findAll({
@@ -522,7 +522,7 @@ app.post("/checkProgress", async (request, response) => {
   return response.json({ progress: progress });
 });
 
-app.post("/checkComplete", async (request, response) => {
+app.post("/checkComplete",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const pageId = request.body.pageId;
   const userId = request.body.userId;
   try {
@@ -546,7 +546,7 @@ app.post("/checkComplete", async (request, response) => {
   }
 });
 
-app.post("/markAsCompleted", async (request, response) => {
+app.post("/markAsCompleted",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const pageId = request.body.pageId;
   const userId = request.body.userId;
   const courseId = request.body.courseId;
@@ -619,7 +619,7 @@ app.post(
   }
 );
 
-app.post("/page", async (request, response) => {
+app.post("/page",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const pg = await page.create({
     pageName: request.body.pageName,
     pageContent: request.body.pageContent,
@@ -651,7 +651,7 @@ app.post("/page", async (request, response) => {
   });
 });
 
-app.post("/chapter", async (request, response) => {
+app.post("/chapter",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const chptr = await chapter.create({
       chapterName: request.body.chapterName,
@@ -687,7 +687,7 @@ app.post("/chapter", async (request, response) => {
   }
 });
 
-app.post("/course", async (request, response) => {
+app.post("/course",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const course = await coursesCreated.create({
       courseName: request.body.courseName,
@@ -712,7 +712,7 @@ app.post("/course", async (request, response) => {
   }
 });
 
-app.post("/enroll", async (request, response) => {
+app.post("/enroll",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const { courseId, userId, courseName } = request.body;
 
   try {
@@ -741,7 +741,7 @@ app.post("/enroll", async (request, response) => {
   }
 });
 
-app.post("/password", async (request, response) => {
+app.post("/password",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const userId = request.user.id;
   const user = await User.findByPk(userId);
   const oldPass = request.body.oldPass;
