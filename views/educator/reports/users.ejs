@@ -4,32 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<%=csrfToken%>"/>
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>Student Progress</title>
     <script>
-         var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-        // Assume `studentIds` is being passed from the server as a JSON array.
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
         let studentIds = <%- JSON.stringify(studentIds) %>;
         let courseId = <%- JSON.stringify(courseId) %>;
 
-        // Function to fetch progress for a student
         async function fetchProgress(studentId) {
             try {
                 const response = await fetch("/getProgress", {
-                   
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ studentId: studentId,courseId:courseId, _csrf:token, })
+                    body: JSON.stringify({ studentId: studentId, courseId: courseId, _csrf: token })
                 });
                 const data = await response.json();
-                return data.courseProg; // Expected to return a numeric progress value
+                return data.courseProg;
             } catch (error) {
                 console.error("Error fetching progress for student", studentId, error);
-                return 0; // Default to 0 if there’s an error
+                return 0;
             }
         }
 
-        // Function to update each student's progress on page load
         async function updateStudentProgress() {
             for (const studentId of studentIds) {
                 const progress = await fetchProgress(studentId);
@@ -38,16 +34,17 @@
             }
         }
 
-        // Call the function on page load
         window.onload = updateStudentProgress;
     </script>
 </head>
-<body>
-    <h1>Students and Progress</h1>
-    <ul>
-        <% studentIds.forEach(function(studentId) { %>
-            <li id="student-<%= studentId %>"><%= studentId %></li>
-        <% }); %>
-    </ul>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4 text-center">Students and Progress</h1>
+        <ul class="bg-white shadow-md rounded-lg p-4">
+            <% studentIds.forEach(function(studentId) { %>
+                <li id="student-<%= studentId %>" class="p-2 border-b border-gray-200"><%= studentId %></li>
+            <% }); %>
+        </ul>
+    </div>
 </body>
 </html>

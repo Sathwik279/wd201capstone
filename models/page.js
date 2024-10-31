@@ -18,6 +18,9 @@ module.exports = (sequelize, DataTypes) => {
       
     }
   }
+
+
+  
   page.init(
     {
       pageName: DataTypes.STRING,

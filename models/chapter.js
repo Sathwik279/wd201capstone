@@ -16,6 +16,10 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
+
+
+
+  
   chapter.init({
     chapterName: DataTypes.STRING,
     chapterDesc: DataTypes.STRING

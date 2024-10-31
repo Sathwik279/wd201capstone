@@ -16,7 +16,7 @@ module.exports = {
         field: "id",
       },
       onDelete: 'CASCADE', // Enable cascading deletes
-      onUpdate: 'CASCADE', // Enable cascading updates (optional)
+      onUpdate: 'CASCADE', // Enable cascading updates 
     });
   },
 

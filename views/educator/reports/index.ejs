@@ -4,21 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<%=csrfToken%>"/>
-
-    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Courses Report</title>
     <script>
         let courses = <%- JSON.stringify(courses) %>;
         console.log(courses);
-
     </script>
 </head>
-<body>
-    <h1>Courses</h1>
-    <ul>
-        <%for(let course of courses){%>
-            <a href="/reports/course/<%=course.id%>"><%=course.courseName%></a>
-        <%}%>
-    </ul>
-</body>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-6">
+        <h1 class="text-4xl font-bold mb-6 text-center">Courses</h1>
+        <ul class="space-y-4">
+            <% for(let course of courses) { %>
+                <li>
+                    <a href="/reports/course/<%=course.id%>" class="block p-4 bg-white rounded-lg shadow hover:bg-gray-100 transition">
+                        <span class="text-xl font-semibold"><%=course.courseName%></span>
+                    </a>
+                </li>
+            <% } %>
+        </ul>
+    </div>
 </body>
 </html>

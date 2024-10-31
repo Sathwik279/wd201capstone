@@ -247,8 +247,6 @@ app.get("/create-page", async (request, response) => {
   const chapterId = request.query.chapterId;
   const userRole = request.user.role;
   const courseId = request.query.courseId;
-  //("chapterId", chapterId);
-  //("courseId", request.query.courseId);
   const courseChapters = await chapter.findAll({
     where: { courseId: request.query.courseId },
   });

@@ -10,6 +10,7 @@ module.exports = {
     await queryInterface.addConstraint("coursesEnrolleds", {
       fields: ["courseId"],
       type: "foreign key",
+      name: "coursesEnrolleds_courseId_fkey",
       references: {
         table: "coursesCreateds",
         field: "id",
@@ -20,7 +21,7 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.removeConstraint("coursesEnrolleds", "coursesEnrolleds_courseId_fkey"); // Replace with the actual constraint name if needed
+    await queryInterface.removeConstraint("coursesEnrolleds", "coursesEnrolleds_courseId_fkey"); 
     await queryInterface.removeColumn("coursesEnrolleds", "courseId");
   }
 };

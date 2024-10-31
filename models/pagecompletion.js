@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       })
     }
   }
+
+
+
+  
   pageCompletion.init({
     pageId: DataTypes.INTEGER,
     userId: DataTypes.INTEGER

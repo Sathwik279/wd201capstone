@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <style>
-      /* Custom hover effect for course cards */
+      
       .course-card:hover {
         transform: scale(1.02);
         transition: transform 0.2s;
@@ -19,6 +19,7 @@
     </style>
     <script>
       var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+      
       // Fetch chapters for a specific course
       function fetchChapters(courseId, role, courseElement) {
         let chaptersList =

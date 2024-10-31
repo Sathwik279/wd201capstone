@@ -15,8 +15,8 @@ module.exports = {
         table: "Users",
         field: "id",
       },
-      onDelete: 'CASCADE', // Enable cascading deletes
-      onUpdate: 'CASCADE', // Enable cascading updates (optional)
+      onDelete: 'CASCADE', // enable cascading deletes
+      onUpdate: 'CASCADE', // enable cascading updates 
     });
   },
 

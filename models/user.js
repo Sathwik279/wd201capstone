@@ -22,10 +22,14 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     //instance method
-    updatePass(newPass) {
-      return this.update({ password: newPass });
-    }
-  }
+            updatePass(newPass) {
+              return this.update({ password: newPass });
+            }
+          }
+
+
+
+
   User.init(
     {
       name: DataTypes.STRING,
