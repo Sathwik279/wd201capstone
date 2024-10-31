@@ -583,7 +583,7 @@ app.post("/markAsCompleted",async(request,response)=>{
   })
   response.status(200).json({completed:true})
 }catch(err){
-    //(err);
+    console.log(err);
   }
 })
 
@@ -784,6 +784,39 @@ app.post("/password",async(request,response)=>{
       return response.status(500).json(err);
     }
 })
+
+app.put("/page", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
+  try{
+    const pageId = request.body.pageId;
+ 
+    const pageContent = request.body.pageContent;
+
+   
+
+
+    // Find the page by ID
+    const pg = await page.findOne({
+      where: {
+        id: pageId,
+      },
+    });
+
+    if (!pg) {
+      return response.status(404).json({ success: false, message: "Page not found" });
+    }
+
+    // Update the page directly
+    await pg.update({
+   
+      pageContent,
+    });
+
+    return response.json({ success: true, message: "Page successfully updated" });
+
+    
+  }catch(err){
+    console.log(err);
+  }});
 
 app.delete("/course/:id/:userId", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {

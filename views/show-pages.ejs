@@ -13,7 +13,7 @@
       const token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
       let chapterPages = <%- JSON.stringify(chapterPages) %>;
       let currentPageIndex = 0;
-      const pageId = chapterPages[currentPageIndex].id;
+      let pageId = chapterPages[currentPageIndex].id;
 
       function renderPage() {
         console.log("rendering the page")
@@ -88,6 +88,7 @@
         }
 
       function markAsCompleted(userId,courseId) {
+        console.log("userid "+userId+" courseId "+courseId);
         
 
         fetch("/markAsCompleted", {
@@ -103,6 +104,7 @@
         .then((res) => {
           if (res.status === 200) {
             console.log("entering reload");
+
             renderPage(); // Reload to fetch the updated status
           }
         })
@@ -128,6 +130,30 @@
 
 
       }
+      function savePage(){
+        const pageContent = document.getElementById('pageContent').value;
+        const saveButton = document.createElement("button");
+        saveButton.innerText = "Save";
+        saveButton.classList.add("bg-blue-500","text-white","font-bold","py-2","px-4","rounded","hover:bg-blue-600","transition","duration-200");
+        saveButton.onclick = function(){
+          fetch("/page",{
+            method:"put",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              _csrf: token,
+              pageId: pageId,
+              pageContent: pageContent
+            }),
+          }
+          ).then((res) => {
+            if (res.ok) {
+              location.reload(); // Reload the whole page
+            }
+          }).catch((err) => console.error(err));
+        }
+        document.querySelector(".controls").appendChild(saveButton);
+        
+      }
 
       window.onload = function() {
         renderPage();
@@ -147,11 +173,12 @@
       </div>
       <div class="container mx-auto p-4 bg-white shadow-md rounded-lg mt-8">
         <h2 id="pageName" class="text-2xl font-semibold mb-4 text-center"></h2>
-        <h3 id="pageContent" class="text-lg mb-6 text-center"></h3>
-        <div class="flex justify-between">
+        <textarea id="pageContent" onchange="savePage()" class="w-full h-67 text-lg mb-6 text-center"></textarea>
+        <div class="flex justify-between controls">
           <button onClick="prevPage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
             Prev Page
           </button>
+
           <%if(userRole==='educator'){%>
           <button onClick="deletePage()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
             Delete Page
