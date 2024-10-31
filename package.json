@@ -4,11 +4,17 @@
   "description": "This project contains the learning management system ",
   "main": "index.js",
   "scripts": {
-    "db:create:test": "NODE_ENV=test npx sequelize-cli db:create",
+    "start": "nodemon -e js,ejs",
+    "start:prod": "node index.js",
     "pretest": "NODE_ENV=test npx sequelize-cli db:drop && NODE_ENV=test npx sequelize-cli db:create",
     "test": "NODE_ENV=test jest --detectOpenHandles",
-    "start": "nodemon --watch . --ext '*'",
     "prepare": "husky"
+  },
+  "lint-staged": {
+    "/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "author": "sathwik <ssathwik31831@gmail.com>",
   "license": "ISC",
@@ -35,8 +41,13 @@
     "tiny-csrf": "^1.1.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.13.0",
     "cheerio": "^1.0.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
     "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
     "supertest": "^7.0.0"
   }
 }
